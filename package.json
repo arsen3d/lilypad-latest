@@ -1,5 +1,5 @@
 {
-  "name": "rivet-plugin-example",
+  "name": "lp",
   "packageManager": "yarn@3.5.0",
   "version": "0.0.3",
   "type": "module",
@@ -16,10 +16,15 @@
     "publish": "yarn npm publish --access public"
   },
   "dependencies": {
-    "@ironclad/rivet-core": "^1.4.0"
+    "@ironclad/rivet-core": "^1.4.0",
+    "tar-stream": "^3.1.7",
+    "untar": "^0.2.9"
   },
   "devDependencies": {
+    "@gradio/client": "^1.9.0",
+    "@types/tar-stream": "^3.1.3",
     "esbuild": "^0.19.2",
+    "esbuild-node-externals": "^1.16.0",
     "npm-run-all": "^4.1.5",
     "recursive-copy": "^2.0.14",
     "tsx": "^3.12.10",

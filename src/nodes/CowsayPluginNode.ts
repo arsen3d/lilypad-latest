@@ -19,15 +19,18 @@ import type {
   Project,
   Rivet,
 } from "@ironclad/rivet-core";
+import { untar } from "untar" ;
+import { untarBlob } from '../utils/untarBlob';
+import { Client } from "@gradio/client";
 
 // This defines your new type of node.
-export type ExamplePluginNode = ChartNode<
-  "examplePlugin",
-  ExamplePluginNodeData
+export type CowsayPluginNode = ChartNode<
+  "cowsayPlugin",
+  CowsayPluginNodeData
 >;
 
 // This defines the data that your new node will store.
-export type ExamplePluginNodeData = {
+export type CowsayPluginNodeData = {
   someData: string;
   SK: string;
   // It is a good idea to include useXInput fields for any inputs you have, so that
@@ -37,12 +40,12 @@ export type ExamplePluginNodeData = {
 
 // Make sure you export functions that take in the Rivet library, so that you do not
 // import the entire Rivet core library in your plugin.
-export function examplePluginNode(rivet: typeof Rivet) {
+export function cowsayPluginNode(rivet: typeof Rivet) {
   // This is your main node implementation. It is an object that implements the PluginNodeImpl interface.
-  const ExamplePluginNodeImpl: PluginNodeImpl<ExamplePluginNode> = {
+  const CowsayPluginNodeImpl: PluginNodeImpl<CowsayPluginNode> = {
     // This should create a new instance of your node type from scratch.
-    create(): ExamplePluginNode {
-      const node: ExamplePluginNode = {
+    create(): CowsayPluginNode {
+      const node: CowsayPluginNode = {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId<NodeId>(),
 
@@ -53,10 +56,10 @@ export function examplePluginNode(rivet: typeof Rivet) {
         },
 
         // This is the default title of your node.
-        title: "Agent",
+        title: "Cowsa",
 
         // This must match the type of your node.
-        type: "examplePlugin",
+        type: "cowsayPlugin",
 
         // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
         visualData: {
@@ -71,7 +74,7 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getInputDefinitions(
-      data: ExamplePluginNodeData,
+      data: CowsayPluginNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
       _project: Project
@@ -97,7 +100,7 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getOutputDefinitions(
-      _data: ExamplePluginNodeData,
+      _data: CowsayPluginNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
       _project: Project
@@ -119,8 +122,8 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This returns UI information for your node, such as how it appears in the context menu.
     getUIData(): NodeUIData {
       return {
-        contextMenuTitle: "Agent",
-        group: "BioMl",
+        contextMenuTitle: "Cowsay !!!",
+        group: "Lilypad",
         infoBoxBody: "This is an example plugin node.",
         infoBoxTitle: "Example Plugin Node",
       };
@@ -128,8 +131,8 @@ export function examplePluginNode(rivet: typeof Rivet) {
 
     // This function defines all editors that appear when you edit your node.
     getEditors(
-      _data: ExamplePluginNodeData
-    ): EditorDefinition<ExamplePluginNode>[] {
+      _data: CowsayPluginNodeData
+    ): EditorDefinition<CowsayPluginNode>[] {
       return [
         {
           type: "string",
@@ -149,7 +152,7 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(
-      data: ExamplePluginNodeData
+      data: CowsayPluginNodeData
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
         Example Plugin Node
@@ -161,7 +164,7 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
     // must also correspond to the output definitions you defined in the getOutputDefinitions function.
     async process(
-      data: ExamplePluginNodeData,
+      data: CowsayPluginNodeData,
       inputData: Inputs,
       _context: InternalProcessContext
     ): Promise<Outputs> {
@@ -172,12 +175,59 @@ export function examplePluginNode(rivet: typeof Rivet) {
         "string"
       );
 
-     const result = await fetch("https://jsonplaceholder.typicode.com/posts" )
-     
+    //  const result = await fetch("https://jsonplaceholder.typicode.com/posts" )
+
+    // const r = await fetch("http://localhost:4000/ping");
+    // console.log(r)
+    // // console.log(await r.text());
+    const api = _context.getPluginConfig('api') || 'no api url. check plugin config';
+    const sk = _context.getPluginConfig('sk') || 'no sk url check plugin config';
+    const payload = {
+      pk: sk,
+      module: someData.split(",")[0],
+      inputs: `-i "${someData.split(",")[1]}="`,
+      stream: "true"
+    };
+    const result = await fetch("http://localhost:4000", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // 'Authorization': `Bearer ${apisk}`
+      },
+      body: JSON.stringify(payload)
+    });
+   
+
+    // import { Client } from "@gradio/client";
+
+  const client = await Client.connect("http://localhost:7860/");
+  const result1 = await client.predict("/run", { 		
+      dropdown: "cowsay:v0.0.4,Message", 		
+      prompt: "Hello!!", 
+  });
+
+  // console.log(result1.data);
+    
+    const s = "await result " 
+    // const tar = await result.blob();
+    // const files = await untarBlob(tar);
+    // console.log("files", files);
+    console.log("1024")
+    // try {
+    //   const files = await untarBlob(tar);
+    //   console.log("files", files);
+    //   for (const file of files) {
+    //     console.log(`Extracted file: ${file.name}`);
+    //   }
+    // } catch (error) {
+    //   console.error("Error extracting tar file:", error);
+    // }
+
+    // console.log("Received tar file:", tar);
       return {
         ["someData" as PortId]: {
           type: "string",
-          value: await result.text(),
+          value: s || "no response",
         },
       };
     },
@@ -185,11 +235,11 @@ export function examplePluginNode(rivet: typeof Rivet) {
 
   // Once a node is defined, you must pass it to rivet.pluginNodeDefinition, which will return a valid
   // PluginNodeDefinition object.
-  const examplePluginNode = rivet.pluginNodeDefinition(
-    ExamplePluginNodeImpl,
+  const cowsayPluginNode = rivet.pluginNodeDefinition(
+    CowsayPluginNodeImpl,
     "Example Plugin Node"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.
-  return examplePluginNode;
+  return cowsayPluginNode;
 }

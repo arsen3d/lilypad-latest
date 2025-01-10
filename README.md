@@ -1,6 +1,6 @@
-<h1 align="center"><img src="https://rivet.ironcladapp.com/img/logo-banner-wide.png" alt="Rivet Logo"></h1>
+ 
 
-# Rivet Example Plugin
+# Lilypad Module Rivet Example Plugin
 
 This project is an example of a [Rivet](https://github.com/Ironclad/rivet) plugin. It is a minimal TypeScript Rivet plugin that adds a single node called Example Plugin Node.
 

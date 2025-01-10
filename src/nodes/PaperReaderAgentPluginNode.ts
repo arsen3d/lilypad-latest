@@ -20,43 +20,58 @@ import type {
   Rivet,
 } from "@ironclad/rivet-core";
 
+ 
 // This defines your new type of node.
-export type ExamplePluginNode = ChartNode<
-  "examplePlugin",
-  ExamplePluginNodeData
+export type PaperReaderAgentPluginNode = ChartNode<
+  "paperReaderAgentPlugin",
+  PaperReaderAgentPluginNodeData
 >;
 
 // This defines the data that your new node will store.
-export type ExamplePluginNodeData = {
+export type PaperReaderAgentPluginNodeData = {
   someData: string;
-  SK: string;
+  // SK: string;
   // It is a good idea to include useXInput fields for any inputs you have, so that
   // the user can toggle whether or not to use an import port for them.
   useSomeDataInput?: boolean;
 };
 
-// Make sure you export functions that take in the Rivet library, so that you do not
-// import the entire Rivet core library in your plugin.
-export function examplePluginNode(rivet: typeof Rivet) {
+// // This defines your new type of node.
+// export type PaperReaderAgentPluginNode = ChartNode<
+//   "paperReaderAgentPlugin",
+//   PaperReaderAgentPluginNodeData
+// >;
+
+// // This defines the data that your new node will store.
+// export type PaperReaderAgentPluginNodeData = {
+//   someData: string;
+//   // SK: string;
+//   // It is a good idea to include useXInput fields for any inputs you have, so that
+//   // the user can toggle whether or not to use an import port for them.
+//   useSomeDataInput?: boolean;
+// };
+
+export function paperReaderAgentPluginNode(rivet: typeof Rivet) {
   // This is your main node implementation. It is an object that implements the PluginNodeImpl interface.
-  const ExamplePluginNodeImpl: PluginNodeImpl<ExamplePluginNode> = {
+  const PaperReaderPluginNodeImpl: PluginNodeImpl<PaperReaderAgentPluginNode> = {
     // This should create a new instance of your node type from scratch.
-    create(): ExamplePluginNode {
-      const node: ExamplePluginNode = {
+    create(): PaperReaderAgentPluginNode {
+      const node: PaperReaderAgentPluginNode = {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId<NodeId>(),
 
+        
         // This is the default data that your node will store
         data: {
           someData: "Hello World From LP!!!",
-          SK:""
+          // SK:""
         },
 
         // This is the default title of your node.
-        title: "Agent",
+        title: "Paper Reader Agent",
 
         // This must match the type of your node.
-        type: "examplePlugin",
+        type: "paperReaderAgentPlugin",
 
         // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
         visualData: {
@@ -71,7 +86,7 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getInputDefinitions(
-      data: ExamplePluginNodeData,
+      data: PaperReaderAgentPluginNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
       _project: Project
@@ -80,15 +95,15 @@ export function examplePluginNode(rivet: typeof Rivet) {
 
       if (data.useSomeDataInput) {
         inputs.push({
-          id: "someData" as PortId,
+          id: "Papers" as PortId,
           dataType: "string",
-          title: "Some Data",
+          title: "Papers",
         });
-        inputs.push({
-          id: "SK" as PortId,
-          dataType: "string",
-          title: "Secret Key",
-        });
+        // inputs.push({
+        //   id: "SK" as PortId,
+        //   dataType: "string",
+        //   title: "Secret Key",
+        // });
       }
 
       return inputs;
@@ -97,7 +112,7 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getOutputDefinitions(
-      _data: ExamplePluginNodeData,
+      _data: PaperReaderAgentPluginNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
       _project: Project
@@ -106,30 +121,30 @@ export function examplePluginNode(rivet: typeof Rivet) {
         {
           id: "someData" as PortId,
           dataType: "string",
-          title: "Some Data",
+          title: "Results",
         },
-        {
-          id: "SK" as PortId,
-          dataType: "string",
-          title: "Secret Key",
-        },
+        // {
+        //   id: "SK" as PortId,
+        //   dataType: "string",
+        //   title: "Secret Key",
+        // },
       ];
     },
 
     // This returns UI information for your node, such as how it appears in the context menu.
     getUIData(): NodeUIData {
       return {
-        contextMenuTitle: "Agent",
+        contextMenuTitle: "Paper Reader Agent",
         group: "BioMl",
-        infoBoxBody: "This is an example plugin node.",
-        infoBoxTitle: "Example Plugin Node",
+        infoBoxBody: "Its core function is to process the documents retrieved by Agent-1 (The Search Agent) at a finer granularity—examining each paper paragraph-by-paragraph. The goal is to identify textual segments that potentially describe proteins, molecules, or structural features relevant to the target disease context discovered in the literature.",
+        infoBoxTitle: "The Paper Reader ",
       };
     },
 
     // This function defines all editors that appear when you edit your node.
     getEditors(
-      _data: ExamplePluginNodeData
-    ): EditorDefinition<ExamplePluginNode>[] {
+      _data: PaperReaderAgentPluginNodeData
+    ): EditorDefinition<PaperReaderAgentPluginNode>[] {
       return [
         {
           type: "string",
@@ -137,31 +152,31 @@ export function examplePluginNode(rivet: typeof Rivet) {
           useInputToggleDataKey: "useSomeDataInput",
           label: "Some Data",
         },
-        {
-          type: "string",
-          dataKey: "SK",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Secret Key",
-        },
+        // {
+        //   type: "string",
+        //   dataKey: "SK",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Secret Key",
+        // },
       ];
     },
 
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(
-      data: ExamplePluginNodeData
+      data: PaperReaderAgentPluginNodeData
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
-        Example Plugin Node
-        Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
+       The Paper Reader 
+       is the second step in the Decentralized AI-Oncologist pipeline. Its core function is to process the documents retrieved by Agent-1 (The Search Agent) at a finer granularity—examining each paper paragraph-by-paragraph. The goal is to identify textual segments that potentially describe proteins, molecules, or structural features relevant to the target disease context discovered in the literature.
       `;
     },
-
+    // Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
     // This is the main processing function for your node. It can do whatever you like, but it must return
     // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
     // must also correspond to the output definitions you defined in the getOutputDefinitions function.
     async process(
-      data: ExamplePluginNodeData,
+      data: PaperReaderAgentPluginNodeData,
       inputData: Inputs,
       _context: InternalProcessContext
     ): Promise<Outputs> {
@@ -185,11 +200,11 @@ export function examplePluginNode(rivet: typeof Rivet) {
 
   // Once a node is defined, you must pass it to rivet.pluginNodeDefinition, which will return a valid
   // PluginNodeDefinition object.
-  const examplePluginNode = rivet.pluginNodeDefinition(
-    ExamplePluginNodeImpl,
-    "Example Plugin Node"
+  const paperReaderAgentPluginNode = rivet.pluginNodeDefinition(
+    PaperReaderPluginNodeImpl,
+    "Paper Reader Agent Plugin Node"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.
-  return examplePluginNode;
+  return paperReaderAgentPluginNode;
 }
