@@ -69,27 +69,55 @@ const syncPlugin: esbuild.Plugin = {
   },
 };
 
-const options = {
+// The isomorphic dynamically imports the node entry point, so we need to rewrite the import to point to the
+// bundled node entry point instead of the original place it was.
+const rewriteNodeEntryPlugin: esbuild.Plugin = {
+  name: "rewrite-node-entry",
+  setup(build) {
+    build.onResolve({ filter: /\/nodeEntry$/ }, (args) => {
+      return {
+        external: true,
+        path: "../dist/nodeEntry.cjs",
+      };
+    });
+  },
+};
+
+const isomorphicBundleOptions: esbuild.BuildOptions = {
   entryPoints: ["src/index.ts"],
   bundle: true,
   platform: "neutral",
   target: "es2020",
   outfile: "dist/bundle.js",
   format: "esm",
-  logLevel: "info",
+  external: ["./src/nodeEntry"],
+  plugins: [rewriteNodeEntryPlugin],
+};
+
+const nodeBundleOptions = {
+  entryPoints: ["src/nodeEntry.ts"],
+  bundle: true,
+  platform: "node",
+  target: "es2020",
+  outfile: "dist/nodeEntry.cjs",
+  format: "cjs",
   plugins: [] as esbuild.Plugin[],
 } satisfies esbuild.BuildOptions;
 
+// TODO will node bundle always run after isomorphic bundle, or is there a race condition?
 if (process.argv.includes("--sync")) {
-  options.plugins.push(syncPlugin);
+  nodeBundleOptions.plugins.push(syncPlugin);
 }
 
 if (process.argv.includes("--watch")) {
-  const context = await esbuild.context(options);
+  const isoContext = await esbuild.context(isomorphicBundleOptions);
+  await isoContext.watch();
 
-  await context.watch();
+  const nodeContext = await esbuild.context(nodeBundleOptions);
+  await nodeContext.watch();
 
   console.log("Watching for changes...");
 } else {
-  await esbuild.build(options);
+  await esbuild.build(isomorphicBundleOptions);
+  await esbuild.build(nodeBundleOptions);
 }

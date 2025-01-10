@@ -182,29 +182,29 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
     // // console.log(await r.text());
     const api = _context.getPluginConfig('api') || 'no api url. check plugin config';
     const sk = _context.getPluginConfig('sk') || 'no sk url check plugin config';
-    const payload = {
-      pk: sk,
-      module: someData.split(",")[0],
-      inputs: `-i "${someData.split(",")[1]}="`,
-      stream: "true"
-    };
-    const result = await fetch("http://localhost:4000", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // 'Authorization': `Bearer ${apisk}`
-      },
-      body: JSON.stringify(payload)
-    });
+    // const payload = {
+    //   pk: sk,
+    //   module: someData.split(",")[0],
+    //   inputs: `-i "${someData.split(",")[1]}="`,
+    //   stream: "true"
+    // };
+    // const result = await fetch("http://localhost:4000", {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //     // 'Authorization': `Bearer ${apisk}`
+    //   },
+    //   body: JSON.stringify(payload)
+    // });
    
 
     // import { Client } from "@gradio/client";
 
-  const client = await Client.connect("http://localhost:7860/");
-  const result1 = await client.predict("/run", { 		
-      dropdown: "cowsay:v0.0.4,Message", 		
-      prompt: "Hello!!", 
-  });
+  // const client = await Client.connect("http://localhost:7860/");
+  // const result1 = await client.predict("/run", { 		
+  //     dropdown: "cowsay:v0.0.4,Message", 		
+  //     prompt: "Hello!!", 
+  // });
 
   // console.log(result1.data);
     
@@ -224,10 +224,15 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
     // }
 
     // console.log("Received tar file:", tar);
+
+    const { runPythonScript } = await import("../nodeEntry");
+
+    const output = await runPythonScript(_context,"scriptPath", ["args"]);
+
       return {
         ["someData" as PortId]: {
           type: "string",
-          value: s || "no response",
+          value:  "no response 5",
         },
       };
     },
