@@ -9,6 +9,9 @@ import { searchAgentPluginNode } from "./nodes/SearchAgentPluginNode.js";
 import { paperReaderAgentPluginNode } from "./nodes/PaperReaderAgentPluginNode.js";
 import { oncologistAgentPluginNode } from "./nodes/OncologistAgentPluginNode.js";
 import { proteinDesignerAgentPluginNode } from "./nodes/ProteinDesignerAgentPluginNode.js";
+import { gradioPluginNode } from "./nodes/GradioPluginNode";
+import { agentPluginNode } from "./nodes/AgentPluginNode";
+import { mediaPluginNode } from "./nodes/MediaPluginNode";
 // A Rivet plugin must default export a plugin initializer function. This takes in the Rivet library as its
 // only parameter. This function must return a valid RivetPlugin object.
 const plugin: RivetPluginInitializer = (rivet) => {
@@ -19,7 +22,9 @@ const plugin: RivetPluginInitializer = (rivet) => {
   const readerNode = paperReaderAgentPluginNode(rivet);
   const oncologistNode = oncologistAgentPluginNode(rivet);
   const proteinDesignerNode = proteinDesignerAgentPluginNode(rivet);
-
+  const gradionNode = gradioPluginNode(rivet);
+  const agentNode = agentPluginNode(rivet);
+  const mediaNode = mediaPluginNode(rivet);
   // The plugin object is the definition for your plugin.
   const examplePlugin: RivetPlugin = {
     // The ID of your plugin should be unique across all plugins.
@@ -65,6 +70,9 @@ const plugin: RivetPluginInitializer = (rivet) => {
       register(readerNode);
       register(oncologistNode);
       register(proteinDesignerNode);
+      register(gradionNode);
+      register(agentNode);
+      register(mediaNode);
       
     },
   };

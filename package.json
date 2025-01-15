@@ -10,6 +10,9 @@
   "scripts": {
     "build": "tsc -b && tsx bundle.ts",
     "dev": "run-p watch:tsc watch:esbuild:sync",
+    "d1": "run-p tsc -b -w --preserveWatchOutput && tsx bundle.ts --watch",
+    "watch:root": "tsx bundle.ts --watch --root",
+    "d2": "run-p watch:tsc watch:esbuild",
     "watch:tsc": "tsc -b -w --preserveWatchOutput",
     "watch:esbuild": "tsx bundle.ts --watch",
     "watch:esbuild:sync": "tsx bundle.ts --watch --sync",
@@ -17,11 +20,13 @@
   },
   "dependencies": {
     "@ironclad/rivet-core": "^1.4.0",
+    "base64-stream": "^1.0.0",
     "tar-stream": "^3.1.7",
     "untar": "^0.2.9"
   },
   "devDependencies": {
     "@gradio/client": "^1.9.0",
+    "@types/base64-stream": "^1.0.5",
     "@types/tar-stream": "^3.1.3",
     "esbuild": "^0.19.2",
     "esbuild-node-externals": "^1.16.0",

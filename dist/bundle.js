@@ -12,7 +12,7 @@ function examplePluginNode(rivet) {
           SK: ""
         },
         // This is the default title of your node.
-        title: "Agent",
+        title: "Example",
         // This must match the type of your node.
         type: "examplePlugin",
         // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
@@ -61,7 +61,7 @@ function examplePluginNode(rivet) {
     // This returns UI information for your node, such as how it appears in the context menu.
     getUIData() {
       return {
-        contextMenuTitle: "Agent",
+        contextMenuTitle: "Example",
         group: "BioMl",
         infoBoxBody: "This is an example plugin node.",
         infoBoxTitle: "Example Plugin Node"
@@ -113,7 +113,7 @@ function examplePluginNode(rivet) {
   };
   const examplePluginNode2 = rivet.pluginNodeDefinition(
     ExamplePluginNodeImpl,
-    "Example Plugin Node"
+    "Example Plugin"
   );
   return examplePluginNode2;
 }
@@ -128,11 +128,14 @@ function cowsayPluginNode(rivet) {
         id: rivet.newId(),
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!",
-          SK: ""
+          someData: "Hello World From LP",
+          SK: "",
+          prompt: "",
+          stdout: "",
+          stderr: ""
         },
         // This is the default title of your node.
-        title: "Cowsa",
+        title: "Cowsay",
         // This must match the type of your node.
         type: "cowsayPlugin",
         // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
@@ -149,17 +152,12 @@ function cowsayPluginNode(rivet) {
     getInputDefinitions(data, _connections, _nodes, _project) {
       const inputs = [];
       if (data.useSomeDataInput) {
-        inputs.push({
-          id: "someData",
-          dataType: "string",
-          title: "Some Data"
-        });
-        inputs.push({
-          id: "SK",
-          dataType: "string",
-          title: "Secret Key"
-        });
       }
+      inputs.push({
+        id: "prompt",
+        dataType: "string",
+        title: "Prompt"
+      });
       return inputs;
     },
     // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
@@ -167,15 +165,20 @@ function cowsayPluginNode(rivet) {
     getOutputDefinitions(_data, _connections, _nodes, _project) {
       return [
         {
-          id: "someData",
+          id: "STDOUTData",
           dataType: "string",
-          title: "Some Data"
+          title: "STDOUT"
         },
         {
-          id: "SK",
+          id: "STDERRData",
           dataType: "string",
-          title: "Secret Key"
+          title: "STDERR"
         }
+        // {
+        //   id: "SK" as PortId,
+        //   dataType: "string",
+        //   title: "Secret Key",
+        // },
       ];
     },
     // This returns UI information for your node, such as how it appears in the context menu.
@@ -190,55 +193,72 @@ function cowsayPluginNode(rivet) {
     // This function defines all editors that appear when you edit your node.
     getEditors(_data) {
       return [
+        // {
+        //   type: "string",
+        //   dataKey: "someData",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Some Data",
+        // },
         {
           type: "string",
-          dataKey: "someData",
+          dataKey: "prompt",
           useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data"
-        },
-        {
-          type: "string",
-          dataKey: "SK",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Secret Key"
+          label: "Prompt"
         }
+        // {
+        //   type: "string",
+        //   dataKey: "SK",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Secret Key",
+        // },
       ];
     },
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(data) {
       return rivet.dedent`
-        Example Plugin Node
-        Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
+        Prompt:
+        ${!data.prompt ? "(Using Input)" : data.prompt}
       `;
     },
     // This is the main processing function for your node. It can do whatever you like, but it must return
     // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
     // must also correspond to the output definitions you defined in the getOutputDefinitions function.
     async process(data, inputData, _context) {
-      const someData = rivet.getInputOrData(
+      console.log("inputData", inputData, data);
+      const prompt = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "prompt",
         "string"
       );
+      console.log("prompt1", prompt);
       const api = _context.getPluginConfig("api") || "no api url. check plugin config";
       const sk = _context.getPluginConfig("sk") || "no sk url check plugin config";
       const s = "await result ";
-      console.log("1024");
-      const { runPythonScript } = await import("../dist/nodeEntry.cjs");
-      const output = await runPythonScript(_context, "scriptPath", ["args"]);
+      const { runModuleScript: runModule } = await import("../dist/nodeEntry.cjs");
+      const output = await runModule(_context, "cowsay:v0.0.4", "Message=" + prompt);
+      const decodedOutput = Buffer.from(output.stdout, "base64").toString("utf-8");
+      const decodedErr = Buffer.from(output.stderr, "base64").toString("utf-8");
       return {
-        ["someData"]: {
+        // ["someData" as PortId]: {
+        //   type: "string",
+        //   value: decodedOutput,
+        // },
+        ["STDOUTData"]: {
           type: "string",
-          value: "no response 5"
+          value: decodedOutput
+        },
+        ["STDERRData"]: {
+          type: "string",
+          value: decodedErr
         }
       };
     }
   };
   const cowsayPluginNode2 = rivet.pluginNodeDefinition(
     CowsayPluginNodeImpl,
-    "Example Plugin Node"
+    "Example Plugin"
   );
   return cowsayPluginNode2;
 }
@@ -354,7 +374,7 @@ function searchAgentPluginNode(rivet) {
   };
   const searchAgentPluginNode2 = rivet.pluginNodeDefinition(
     SearchAgentPluginNodeImpl,
-    "Search Agent Plugin Node"
+    "Search Agent"
   );
   return searchAgentPluginNode2;
 }
@@ -470,7 +490,7 @@ function paperReaderAgentPluginNode(rivet) {
   };
   const paperReaderAgentPluginNode2 = rivet.pluginNodeDefinition(
     PaperReaderPluginNodeImpl,
-    "Paper Reader Agent Plugin Node"
+    "Paper Reader Agent"
   );
   return paperReaderAgentPluginNode2;
 }
@@ -585,7 +605,7 @@ function oncologistAgentPluginNode(rivet) {
   };
   const oncologistAgentPluginNode2 = rivet.pluginNodeDefinition(
     OncologistAgentPluginNodeImpl,
-    "Search Agent Plugin Node"
+    "Search Agent"
   );
   return oncologistAgentPluginNode2;
 }
@@ -700,9 +720,455 @@ function proteinDesignerAgentPluginNode(rivet) {
   };
   const proteinDesignerAgentPluginNode2 = rivet.pluginNodeDefinition(
     ProteinDesignerAgentPluginNodeImpl,
-    "Search Agent Plugin Node"
+    "Search Agent"
   );
   return proteinDesignerAgentPluginNode2;
+}
+
+// src/nodes/GradioPluginNode.ts
+function gradioPluginNode(rivet) {
+  const GradioPluginNodeImpl = {
+    // This should create a new instance of your node type from scratch.
+    create() {
+      const node = {
+        // Use rivet.newId to generate new IDs for your nodes.
+        id: rivet.newId(),
+        // This is the default data that your node will store
+        data: {
+          someData: "Hello World From LP!!!",
+          SK: ""
+        },
+        // This is the default title of your node.
+        title: "Gradio",
+        // This must match the type of your node.
+        type: "gradioPlugin",
+        // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
+        visualData: {
+          x: 0,
+          y: 0,
+          width: 200
+        }
+      };
+      return node;
+    },
+    // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getInputDefinitions(data, _connections, _nodes, _project) {
+      const inputs = [];
+      if (data.useSomeDataInput) {
+        inputs.push({
+          id: "someData",
+          dataType: "string",
+          title: "Some Data"
+        });
+        inputs.push({
+          id: "SK",
+          dataType: "string",
+          title: "Secret Key"
+        });
+      }
+      return inputs;
+    },
+    // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getOutputDefinitions(_data, _connections, _nodes, _project) {
+      return [
+        {
+          id: "someData",
+          dataType: "string",
+          title: "Some Data"
+        },
+        {
+          id: "SK",
+          dataType: "string",
+          title: "Secret Key"
+        }
+      ];
+    },
+    // This returns UI information for your node, such as how it appears in the context menu.
+    getUIData() {
+      return {
+        contextMenuTitle: "Gradio",
+        group: "Lilypad",
+        infoBoxBody: "This is an example plugin node.",
+        infoBoxTitle: "Example Plugin Node"
+      };
+    },
+    // This function defines all editors that appear when you edit your node.
+    getEditors(_data) {
+      return [
+        {
+          type: "string",
+          dataKey: "someData",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "Some Data"
+        },
+        {
+          type: "string",
+          dataKey: "SK",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "Secret Key"
+        }
+      ];
+    },
+    // This function returns the body of the node when it is rendered on the graph. You should show
+    // what the current data of the node is in some way that is useful at a glance.
+    getBody(data) {
+      return rivet.dedent`
+        Example Plugin Node
+        Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
+      `;
+    },
+    // This is the main processing function for your node. It can do whatever you like, but it must return
+    // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
+    // must also correspond to the output definitions you defined in the getOutputDefinitions function.
+    async process(data, inputData, _context) {
+      const someData = rivet.getInputOrData(
+        data,
+        inputData,
+        "someData",
+        "string"
+      );
+      const response = await fetch("https://bharat-raghunathan-song-lyrics-classifier.hf.space/call/predict", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          data: ["Hello!!"]
+        })
+      });
+      const { event_id } = await response.json();
+      const result = await fetch(`https://bharat-raghunathan-song-lyrics-classifier.hf.space/call/predict/${event_id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      const text = (await result.text()).replace("data", '"data"');
+      const lines = text.split("\n");
+      lines.shift();
+      const modifiedText = "{" + lines.join("\n") + "}";
+      console.log(modifiedText);
+      const resultData = JSON.parse(modifiedText);
+      const value = resultData.data;
+      return {
+        ["someData"]: {
+          type: "string",
+          value: JSON.stringify(value)
+        }
+      };
+    }
+  };
+  const gradioPluginNode2 = rivet.pluginNodeDefinition(
+    GradioPluginNodeImpl,
+    "Example Plugin"
+  );
+  return gradioPluginNode2;
+}
+
+// src/nodes/AgentPluginNode.ts
+function agentPluginNode(rivet) {
+  const AgentPluginNodeImpl = {
+    // This should create a new instance of your node type from scratch.
+    create() {
+      const node = {
+        // Use rivet.newId to generate new IDs for your nodes.
+        id: rivet.newId(),
+        // This is the default data that your node will store
+        data: {
+          module: "github.com/noryev/module-sdxl-ipfs:ae17e969cadab1c53d7cabab1927bb403f02fd2a",
+          input: "prompt=cow",
+          binary_path: "outputs/output.png"
+        },
+        // This is the default title of your node.
+        title: "Agent",
+        // This must match the type of your node.
+        type: "agentPlugin",
+        // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
+        visualData: {
+          x: 0,
+          y: 0,
+          width: 200
+        }
+      };
+      return node;
+    },
+    // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getInputDefinitions(data, _connections, _nodes, _project) {
+      const inputs = [];
+      if (data.useSomeDataInput) {
+        inputs.push({
+          id: "module",
+          dataType: "string",
+          title: "module"
+        });
+        inputs.push({
+          id: "input",
+          dataType: "string",
+          title: "input"
+        });
+        inputs.push({
+          id: "json",
+          dataType: "string",
+          title: "input"
+        });
+      }
+      return inputs;
+    },
+    // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getOutputDefinitions(_data, _connections, _nodes, _project) {
+      return [
+        {
+          id: "stdout",
+          dataType: "string",
+          title: "stdout"
+        },
+        {
+          id: "stderr",
+          dataType: "string",
+          title: "stderr"
+        },
+        {
+          id: "binary",
+          dataType: "any",
+          title: "binary"
+        }
+      ];
+    },
+    // This returns UI information for your node, such as how it appears in the context menu.
+    getUIData() {
+      return {
+        contextMenuTitle: "Agent",
+        group: "BioMl",
+        infoBoxBody: "This a Lilypad Agent plugin node.",
+        infoBoxTitle: "Agent Plugin"
+      };
+    },
+    // This function defines all editors that appear when you edit your node.
+    getEditors(_data) {
+      return [
+        {
+          type: "string",
+          dataKey: "module",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "module"
+        },
+        {
+          type: "string",
+          dataKey: "input",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "input"
+        },
+        {
+          type: "string",
+          dataKey: "binary_path",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "binary path"
+        }
+      ];
+    },
+    // This function returns the body of the node when it is rendered on the graph. You should show
+    // what the current data of the node is in some way that is useful at a glance.
+    getBody(data) {
+      return rivet.dedent`
+        Module: ${data.useSomeDataInput ? "(Using Input)" : data.module}
+        Input: ${data.useSomeDataInput ? "(Using Input)" : data.input}
+      `;
+    },
+    // This is the main processing function for your node. It can do whatever you like, but it must return
+    // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
+    // must also correspond to the output definitions you defined in the getOutputDefinitions function.
+    async process(data, inputData, _context) {
+      console.log("inputData", inputData, data);
+      const input = rivet.getInputOrData(
+        data,
+        inputData,
+        "input",
+        "string"
+      );
+      const module = rivet.getInputOrData(
+        data,
+        inputData,
+        "module",
+        "string"
+      );
+      const binary_path = rivet.getInputOrData(
+        data,
+        inputData,
+        "binary_path",
+        "string"
+      );
+      const api = _context.getPluginConfig("api") || "no api url. check plugin config";
+      const sk = _context.getPluginConfig("sk") || "no sk url check plugin config";
+      const payload = {
+        pk: sk,
+        module,
+        inputs: `-i "${input}"`,
+        format: "json",
+        stream: "true"
+      };
+      const result = await fetch(api, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      const json = await result.json();
+      const decodedOutput = atob(json.stdout);
+      const decodedErr = atob(json.stderr);
+      let binary = null;
+      if (json[binary_path] != void 0) {
+        const img = atob(json[binary_path]);
+        const imgBuffer = Uint8Array.from(img, (c) => c.charCodeAt(0));
+        binary = imgBuffer;
+      }
+      return {
+        ["stdout"]: {
+          type: "string",
+          value: decodedOutput
+        },
+        ["stderr"]: {
+          type: "string",
+          value: decodedErr
+        },
+        ["binary"]: {
+          type: "any",
+          value: binary
+        }
+      };
+    }
+  };
+  const agentPluginNode2 = rivet.pluginNodeDefinition(
+    AgentPluginNodeImpl,
+    "Agent Plugin"
+  );
+  return agentPluginNode2;
+}
+
+// src/nodes/MediaPluginNode.ts
+function mediaPluginNode(rivet) {
+  const MediaPluginNodeImpl = {
+    // This should create a new instance of your node type from scratch.
+    create() {
+      const node = {
+        // Use rivet.newId to generate new IDs for your nodes.
+        id: rivet.newId(),
+        // This is the default data that your node will store
+        data: {
+          someData: "Hello World From LP!!!",
+          SK: "",
+          image: new Image()
+        },
+        // This is the default title of your node.
+        title: "Media",
+        // This must match the type of your node.
+        type: "mediaPlugin",
+        // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
+        visualData: {
+          x: 0,
+          y: 0,
+          width: 200
+        }
+      };
+      return node;
+    },
+    // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getInputDefinitions(data, _connections, _nodes, _project) {
+      const inputs = [];
+      if (data.useSomeDataInput) {
+        inputs.push({
+          id: "someData",
+          dataType: "string",
+          title: "Some Data"
+        });
+        inputs.push({
+          id: "SK",
+          dataType: "string",
+          title: "Secret Key"
+        });
+      }
+      return inputs;
+    },
+    // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getOutputDefinitions(_data, _connections, _nodes, _project) {
+      return [
+        {
+          id: "someData",
+          dataType: "string",
+          title: "Some Data"
+        },
+        {
+          id: "SK",
+          dataType: "string",
+          title: "Secret Key"
+        }
+      ];
+    },
+    // This returns UI information for your node, such as how it appears in the context menu.
+    getUIData() {
+      return {
+        contextMenuTitle: "Media",
+        group: "Lilypad",
+        infoBoxBody: "This is an example plugin node.",
+        infoBoxTitle: "Media Plugin Node"
+      };
+    },
+    // This function defines all editors that appear when you edit your node.
+    getEditors(_data) {
+      return [
+        {
+          type: "string",
+          dataKey: "someData",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "Some Data"
+        },
+        {
+          type: "string",
+          dataKey: "SK",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "Secret Key"
+        }
+      ];
+    },
+    // This function returns the body of the node when it is rendered on the graph. You should show
+    // what the current data of the node is in some way that is useful at a glance.
+    getBody(data) {
+      return rivet.dedent`
+        <div>
+        Media Plugin Node
+        Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
+      `;
+    },
+    // This is the main processing function for your node. It can do whatever you like, but it must return
+    // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
+    // must also correspond to the output definitions you defined in the getOutputDefinitions function.
+    async process(data, inputData, _context) {
+      const someData = rivet.getInputOrData(
+        data,
+        inputData,
+        "someData",
+        "string"
+      );
+      const result = await fetch("https://jsonplaceholder.typicode.com/posts");
+      return {
+        ["image"]: {
+          type: "string",
+          value: "<img>test</img>"
+        }
+      };
+    }
+  };
+  const mediaPluginNode2 = rivet.pluginNodeDefinition(
+    MediaPluginNodeImpl,
+    "Media Plugin"
+  );
+  return mediaPluginNode2;
 }
 
 // src/index.ts
@@ -713,6 +1179,9 @@ var plugin = (rivet) => {
   const readerNode = paperReaderAgentPluginNode(rivet);
   const oncologistNode = oncologistAgentPluginNode(rivet);
   const proteinDesignerNode = proteinDesignerAgentPluginNode(rivet);
+  const gradionNode = gradioPluginNode(rivet);
+  const agentNode = agentPluginNode(rivet);
+  const mediaNode = mediaPluginNode(rivet);
   const examplePlugin = {
     // The ID of your plugin should be unique across all plugins.
     id: "example-plugin-lp",
@@ -753,6 +1222,9 @@ var plugin = (rivet) => {
       register(readerNode);
       register(oncologistNode);
       register(proteinDesignerNode);
+      register(gradionNode);
+      register(agentNode);
+      register(mediaNode);
     }
   };
   return examplePlugin;

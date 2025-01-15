@@ -202,7 +202,7 @@ export function paperReaderAgentPluginNode(rivet: typeof Rivet) {
   // PluginNodeDefinition object.
   const paperReaderAgentPluginNode = rivet.pluginNodeDefinition(
     PaperReaderPluginNodeImpl,
-    "Paper Reader Agent Plugin Node"
+    "Paper Reader Agent"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.

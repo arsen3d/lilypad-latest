@@ -53,7 +53,7 @@ export function examplePluginNode(rivet: typeof Rivet) {
         },
 
         // This is the default title of your node.
-        title: "Agent",
+        title: "Example",
 
         // This must match the type of your node.
         type: "examplePlugin",
@@ -119,7 +119,7 @@ export function examplePluginNode(rivet: typeof Rivet) {
     // This returns UI information for your node, such as how it appears in the context menu.
     getUIData(): NodeUIData {
       return {
-        contextMenuTitle: "Agent",
+        contextMenuTitle: "Example",
         group: "BioMl",
         infoBoxBody: "This is an example plugin node.",
         infoBoxTitle: "Example Plugin Node",
@@ -187,7 +187,7 @@ export function examplePluginNode(rivet: typeof Rivet) {
   // PluginNodeDefinition object.
   const examplePluginNode = rivet.pluginNodeDefinition(
     ExamplePluginNodeImpl,
-    "Example Plugin Node"
+    "Example Plugin"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.

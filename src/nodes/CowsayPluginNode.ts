@@ -19,9 +19,9 @@ import type {
   Project,
   Rivet,
 } from "@ironclad/rivet-core";
-import { untar } from "untar" ;
-import { untarBlob } from '../utils/untarBlob';
-import { Client } from "@gradio/client";
+// import { untar } from "untar" ;
+// import { untarBlob } from '../utils/untarBlob';
+// import { Client } from "@gradio/client";
 
 // This defines your new type of node.
 export type CowsayPluginNode = ChartNode<
@@ -33,6 +33,9 @@ export type CowsayPluginNode = ChartNode<
 export type CowsayPluginNodeData = {
   someData: string;
   SK: string;
+  prompt: string;
+  stdout: string;
+  stderr: string;
   // It is a good idea to include useXInput fields for any inputs you have, so that
   // the user can toggle whether or not to use an import port for them.
   useSomeDataInput?: boolean;
@@ -51,12 +54,15 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
 
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!",
-          SK:""
+          someData: "Hello World From LP",
+          SK:"",
+          prompt: "",
+          stdout: "",
+          stderr: "",
         },
 
         // This is the default title of your node.
-        title: "Cowsa",
+        title: "Cowsay",
 
         // This must match the type of your node.
         type: "cowsayPlugin",
@@ -82,17 +88,18 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
       const inputs: NodeInputDefinition[] = [];
 
       if (data.useSomeDataInput) {
-        inputs.push({
-          id: "someData" as PortId,
-          dataType: "string",
-          title: "Some Data",
-        });
-        inputs.push({
-          id: "SK" as PortId,
-          dataType: "string",
-          title: "Secret Key",
-        });
       }
+        inputs.push({
+          id: "prompt" as PortId,
+          dataType: "string",
+          title: "Prompt",
+        });
+        // inputs.push({
+        //   id: "SK" as PortId,
+        //   dataType: "string",
+        //   title: "Secret Key",
+        // });
+   
 
       return inputs;
     },
@@ -107,15 +114,20 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
     ): NodeOutputDefinition[] {
       return [
         {
-          id: "someData" as PortId,
+          id: "STDOUTData" as PortId,
           dataType: "string",
-          title: "Some Data",
+          title: "STDOUT",
         },
         {
-          id: "SK" as PortId,
+          id: "STDERRData" as PortId,
           dataType: "string",
-          title: "Secret Key",
+          title: "STDERR",
         },
+        // {
+        //   id: "SK" as PortId,
+        //   dataType: "string",
+        //   title: "Secret Key",
+        // },
       ];
     },
 
@@ -129,23 +141,31 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
       };
     },
 
+
+
     // This function defines all editors that appear when you edit your node.
     getEditors(
       _data: CowsayPluginNodeData
     ): EditorDefinition<CowsayPluginNode>[] {
       return [
+        // {
+        //   type: "string",
+        //   dataKey: "someData",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Some Data",
+        // },
         {
           type: "string",
-          dataKey: "someData",
+          dataKey: "prompt",
           useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data",
+          label: "Prompt",
         },
-        {
-          type: "string",
-          dataKey: "SK",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Secret Key",
-        },
+        // {
+        //   type: "string",
+        //   dataKey: "SK",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Secret Key",
+        // },
       ];
     },
 
@@ -155,8 +175,8 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
       data: CowsayPluginNodeData
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
-        Example Plugin Node
-        Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
+        Prompt:
+        ${!data.prompt ? "(Using Input)" : data.prompt}
       `;
     },
 
@@ -168,13 +188,14 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
       inputData: Inputs,
       _context: InternalProcessContext
     ): Promise<Outputs> {
-      const someData = rivet.getInputOrData(
+      console.log("inputData",inputData,data)
+      const prompt = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "prompt",
         "string"
       );
-
+      console.log("prompt1",prompt)
     //  const result = await fetch("https://jsonplaceholder.typicode.com/posts" )
 
     // const r = await fetch("http://localhost:4000/ping");
@@ -212,7 +233,7 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
     // const tar = await result.blob();
     // const files = await untarBlob(tar);
     // console.log("files", files);
-    console.log("1024")
+
     // try {
     //   const files = await untarBlob(tar);
     //   console.log("files", files);
@@ -225,14 +246,23 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
 
     // console.log("Received tar file:", tar);
 
-    const { runPythonScript } = await import("../nodeEntry");
-
-    const output = await runPythonScript(_context,"scriptPath", ["args"]);
-
-      return {
-        ["someData" as PortId]: {
+    const { runModuleScript: runModule } = await import("../nodeEntry");
+    const output = await runModule(_context,"cowsay:v0.0.4", "Message="+prompt);
+    const decodedOutput = Buffer.from(output.stdout, 'base64').toString('utf-8');
+    const decodedErr = Buffer.from(output.stderr, 'base64').toString('utf-8');
+    // const decodedOutput = prompt  
+    return {
+        // ["someData" as PortId]: {
+        //   type: "string",
+        //   value: decodedOutput,
+        // },
+        ["STDOUTData" as PortId]: {
           type: "string",
-          value:  "no response 5",
+          value: decodedOutput,
+        },
+        ["STDERRData" as PortId]: {
+          type: "string",
+          value: decodedErr,
         },
       };
     },
@@ -242,7 +272,7 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
   // PluginNodeDefinition object.
   const cowsayPluginNode = rivet.pluginNodeDefinition(
     CowsayPluginNodeImpl,
-    "Example Plugin Node"
+    "Example Plugin"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.

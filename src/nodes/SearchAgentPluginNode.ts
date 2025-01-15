@@ -186,7 +186,7 @@ export function searchAgentPluginNode(rivet: typeof Rivet) {
   // PluginNodeDefinition object.
   const searchAgentPluginNode = rivet.pluginNodeDefinition(
     SearchAgentPluginNodeImpl,
-    "Search Agent Plugin Node"
+    "Search Agent"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.

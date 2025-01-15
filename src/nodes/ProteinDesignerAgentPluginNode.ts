@@ -185,7 +185,7 @@ export function proteinDesignerAgentPluginNode(rivet: typeof Rivet) {
   // PluginNodeDefinition object.
   const proteinDesignerAgentPluginNode = rivet.pluginNodeDefinition(
     ProteinDesignerAgentPluginNodeImpl,
-    "Search Agent Plugin Node"
+    "Search Agent"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.

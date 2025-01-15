@@ -30,9 +30,12 @@ const syncPlugin: esbuild.Plugin = {
   name: "onBuild",
   setup(build) {
     build.onEnd(async () => {
+    
+      
       const packageJson = JSON.parse(
         await readFile(join(__dirname, "package.json"), "utf-8")
       );
+     
       const pluginName = packageJson.name;
 
       const rivetPluginsDirectory = join(getAppDataLocalPath(), "plugins");
@@ -40,13 +43,15 @@ const syncPlugin: esbuild.Plugin = {
         rivetPluginsDirectory,
         `${pluginName}-latest`
       );
-
+      console.log("Syncing plugin to Rivet... 51"+ rivetPluginsDirectory);
+      // await new Promise((resolve) => setTimeout(resolve, 2000));
       await rm(join(thisPluginDirectory, "package"), {
         recursive: true,
         force: true,
       });
+      
       await mkdir(join(thisPluginDirectory, "package"), { recursive: true });
-
+      
       await copy(
         join(__dirname, "dist"),
         join(thisPluginDirectory, "package", "dist")
@@ -108,10 +113,10 @@ const nodeBundleOptions = {
 if (process.argv.includes("--sync")) {
   nodeBundleOptions.plugins.push(syncPlugin);
 }
-
+console.log("process.argv", process.argv);
 if (process.argv.includes("--watch")) {
-  const isoContext = await esbuild.context(isomorphicBundleOptions);
-  await isoContext.watch();
+   const isoContext = await esbuild.context(isomorphicBundleOptions);
+   isoContext.watch();
 
   const nodeContext = await esbuild.context(nodeBundleOptions);
   await nodeContext.watch();

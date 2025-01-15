@@ -185,7 +185,7 @@ export function oncologistAgentPluginNode(rivet: typeof Rivet) {
   // PluginNodeDefinition object.
   const oncologistAgentPluginNode = rivet.pluginNodeDefinition(
     OncologistAgentPluginNodeImpl,
-    "Search Agent Plugin Node"
+    "Search Agent"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.
