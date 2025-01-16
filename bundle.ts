@@ -1,7 +1,7 @@
-import * as esbuild from "esbuild";
-import { match } from "ts-pattern";
+import * as esbuild from "./node_modules/esbuild/lib/main";
+import { match } from "./node_modules/ts-pattern/dist";
 import { join, dirname } from "node:path";
-import copy from "recursive-copy";
+import copy from "./node_modules/recursive-copy";
 import { platform, homedir } from "node:os";
 import { readFile, rm, mkdir, copyFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";

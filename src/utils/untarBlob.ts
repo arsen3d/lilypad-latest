@@ -1,4 +1,4 @@
-import tar from 'tar-stream';
+import tar from '../../node_modules/@types/tar-stream';
 
 export async function untarBlob(blob: Blob): Promise<Array<{ name: string; blob: Blob }>> {
   return new Promise((resolve, reject) => {

@@ -2,25 +2,30 @@
 // Make sure you do `import type` and do not pull in the entire Rivet core library here.
 // Export a function that takes in a Rivet object, and you can access rivet library functionality
 // from there.
-import type {
-  ChartNode,
-  EditorDefinition,
-  ImageNode,
-  Inputs,
-  InternalProcessContext,
-  NodeBodySpec,
-  NodeConnection,
-  NodeId,
-  NodeInputDefinition,
-  NodeOutputDefinition,
-  NodeUIData,
-  Outputs,
-  PluginNodeImpl,
-  PortId,
-  Project,
+import {
+  base64ToUint8Array,
+  DataId,
+  DataRef,
   Rivet,
-} from "@ironclad/rivet-core";
+  type ChartNode,
+  type EditorDefinition,
+  type ImageNode,
+  type Inputs,
+  type InternalProcessContext,
+  type MarkdownNodeBodySpec,
+  type NodeConnection,
+  type NodeId,
+  type NodeInputDefinition,
+  type NodeOutputDefinition,
+  type NodeUIData,
+  type Outputs,
+  type PluginNodeImpl,
+  type PortId,
+  type Project,
+} from "../../node_modules/@ironclad/rivet-core/dist/types";
 
+
+// import { type Rivet } from '@ironclad/rivet-core';
 // This defines your new type of node.
 export type MediaPluginNode = ChartNode<
   "mediaPlugin",
@@ -29,12 +34,16 @@ export type MediaPluginNode = ChartNode<
 
 // This defines the data that your new node will store.
 export type MediaPluginNodeData = {
-  someData: string;
-  SK: string;
-  image:HTMLImageElement
+  data?: DataRef;
+  useDataInput: boolean;
+  mediaType: 'image/png' | 'image/jpeg' | 'image/gif';
+  useMediaTypeInput: boolean;
+  // dt: string;
+  // sk: string;
+  // image:HTMLImageElement
   // It is a good idea to include useXInput fields for any inputs you have, so that
   // the user can toggle whether or not to use an import port for them.
-  useSomeDataInput?: boolean;
+  // useSomeDataInput?: boolean;
 };
 
 // Make sure you export functions that take in the Rivet library, so that you do not
@@ -47,13 +56,22 @@ export function mediaPluginNode(rivet: typeof Rivet) {
       const node: MediaPluginNode = {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId<NodeId>(),
-
-        // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!",
-          SK:"",
-          image: new Image()
+          useDataInput: false,
+          mediaType: 'image/png',
+          useMediaTypeInput: false,
         },
+        // This is the default data that your node will store
+        // data: {
+        //   data:{
+        //     refId: rivet.newId<DataId>(),
+        //     // type: "binary",
+        //   }
+
+        //   // someData: "about:blank",
+        //   // SK: "",
+        //   // image: new Image()
+        // },
 
         // This is the default title of your node.
         title: "Media",
@@ -66,6 +84,7 @@ export function mediaPluginNode(rivet: typeof Rivet) {
           x: 0,
           y: 0,
           width: 200,
+          
         },
       };
       return node;
@@ -81,18 +100,18 @@ export function mediaPluginNode(rivet: typeof Rivet) {
     ): NodeInputDefinition[] {
       const inputs: NodeInputDefinition[] = [];
 
-      if (data.useSomeDataInput) {
-        inputs.push({
-          id: "someData" as PortId,
-          dataType: "string",
-          title: "Some Data",
-        });
-        inputs.push({
-          id: "SK" as PortId,
-          dataType: "string",
-          title: "Secret Key",
-        });
-      }
+      // if (data.useSomeDataInput) {
+      //   inputs.push({
+      //     id: "someData" as PortId,
+      //     dataType: "string",
+      //     title: "Some Data",
+      //   });
+        // inputs.push({
+        //   id: "f" as PortId,
+        //   dataType: "binary",
+        //   title: "File",
+        // });
+      // }
 
       return inputs;
     },
@@ -106,16 +125,16 @@ export function mediaPluginNode(rivet: typeof Rivet) {
       _project: Project
     ): NodeOutputDefinition[] {
       return [
-        {
-          id: "someData" as PortId,
-          dataType: "string",
-          title: "Some Data",
-        },
-        {
-          id: "SK" as PortId,
-          dataType: "string",
-          title: "Secret Key",
-        },
+        // {
+        //   id: "someData" as PortId,
+        //   dataType: "string",
+        //   title: "Some Data",
+        // },
+        // {
+        //   id: "SK" as PortId,
+        //   dataType: "binary",
+        //   title: "Secret Key",
+        // },
       ];
     },
 
@@ -133,32 +152,85 @@ export function mediaPluginNode(rivet: typeof Rivet) {
     getEditors(
       _data: MediaPluginNodeData
     ): EditorDefinition<MediaPluginNode>[] {
+      console.log(_data)
       return [
         {
-          type: "string",
-          dataKey: "someData",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data",
+          type: "fileBrowser",
+          dataKey: "data",
+          mediaTypeDataKey: "mediaType",
+          useInputToggleDataKey: "useDataInput",
+          label: "File Path",
         },
-        {
-          type: "string",
-          dataKey: "SK",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Secret Key",
-        },
+        // {
+        //   type: "string",
+        //   dataKey: "someData",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Some Data",
+        // },
+        // {
+        //   type: "string",
+        //   dataKey: "SK",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Secret Key",
+        // },
+      
       ];
     },
 
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(
-      data: MediaPluginNodeData
-    ): string | NodeBodySpec | NodeBodySpec[] | undefined {
-      return rivet.dedent`
-        <div>
-        Media Plugin Node
-        Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
-      `;
+      data: MediaPluginNodeData,
+      c:any
+    ): string | MarkdownNodeBodySpec | MarkdownNodeBodySpec[] | undefined {
+
+
+      let _context = c as InternalProcessContext;
+      // console.log(_context)
+      // console.log(data.data?.refId)
+            // const someData = rivet.getInputOrData(
+            //   data,
+            //   inputData,
+            //   "SK",
+            //   "object"
+            // );
+            // _context.project.
+            // let someData = {} as any;
+            // console.log("bin",someData)
+            // let ref = data.someData["refId"] as string;
+            // let ref =  (data as Record<string, string>)
+            // console.log("ref",ref)
+            // console.log(_context.project)
+            //  const x =  (_context.project.data as Record<string, string>)[data.data?.refId as string]  ;
+            // // console.log("x",base64ToUint8Array(x))
+            // console.log("x",x)
+            const iframeHeight = window.innerHeight/2;
+            return ({
+              type: "markdown",
+              text: `<iframe id="asdf" 
+              onload="try {
+                  // const doc = this.contentDocument || this.contentWindow.document;
+                  // console.log(getElementById('asdf').src);
+                  // console.log(this.getElementById('iframe').contentWindow.document.body.scrollHeight);
+                  this.style.height = 500 + 'px';
+                  //  console.log(this.height =1000);
+                  //  console.log(doc.documentElement.scrollHeight);
+               } catch (e) {
+                   console.error('Unable to access iframe content:', e);
+               }"
+              frameborder="0"  
+              width="100%" 
+           
+              />
+              `
+            });
+
+            
+      // return rivet.dedent`
+      //   <div>
+      //   Media Plugin Node
+      //   Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
+      // `;
     },
 
     // This is the main processing function for your node. It can do whatever you like, but it must return
@@ -169,14 +241,48 @@ export function mediaPluginNode(rivet: typeof Rivet) {
       inputData: Inputs,
       _context: InternalProcessContext
     ): Promise<Outputs> {
-      const someData = rivet.getInputOrData(
-        data,
-        inputData,
-        "someData",
-        "string"
-      );
 
-     const result = await fetch("https://jsonplaceholder.typicode.com/posts" )
+
+      // let data: Uint8Array;
+
+      // if (this.chartNode.data.useDataInput) {
+      //   data = expectType(inputData['data' as PortId], 'binary');
+      // } else {
+      const dataRef = data.data?.refId as string;
+      let d = _context.project.data as Record<string, string>;
+      console.log("d",d[dataRef])
+      console.log(data.data?.refId)
+      
+        // if (!dataRef) {
+        //   throw new Error('No data ref');
+        // }
+  
+        // const encodedData = _context.project.data?.[dataRef] as string;
+        const encodedData = (_context.project.data as Record<string, string>)[dataRef]
+        // if (!encodedData) {
+        //   throw new Error(`No data at ref ${dataRef}`);
+        // }
+  
+      //   data = base64ToUint8Array(encodedData);
+      // }
+  
+      // const mediaType = this.chartNode.data.useMediaTypeInput
+      //   ? expectType(inputData['mediaType' as PortId], 'string')
+      //   : this.chartNode.data.mediaType;
+
+      // const someData = rivet.getInputOrData(
+      //   data,
+      //   inputData,
+      //   "SK",
+      //   "object"
+      // );
+      // console.log(someData)
+      // let ref = someData["refId"] as string;
+      // const ref = data.data?.refId as string;
+      // let x =  (_context.project.data as Record<string, string>)[ref]  ;
+      // console.log("x",base64ToUint8Array(x))
+      // const encodedData = _context.project.data?.[someData] as string;
+      const result = await fetch("https://jsonplaceholder.typicode.com/posts" )
      
       return {
         ["image" as PortId]: {

@@ -18,7 +18,7 @@ import type {
   PortId,
   Project,
   Rivet,
-} from "@ironclad/rivet-core";
+} from "../../node_modules/@ironclad/rivet-core/dist/types";
 
 // This defines your new type of node.
 export type GradioPluginNode = ChartNode<

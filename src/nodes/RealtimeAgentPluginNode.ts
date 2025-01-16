@@ -8,34 +8,30 @@ import type {
   Inputs,
   InternalProcessContext,
   NodeBodySpec,
+  MarkdownNodeBodySpec,
   NodeConnection,
   NodeId,
   NodeInputDefinition,
   NodeOutputDefinition,
   NodeUIData,
   Outputs,
-  PluginNodeImpl,
+  PluginNodeImpl as RealtimeAgentNodeImpl,
   PortId,
   Project,
   Rivet,
 } from "../../node_modules/@ironclad/rivet-core/dist/types";
-// import { untar } from "untar" ;
-// import { untarBlob } from '../utils/untarBlob';
-// import { Client } from "@gradio/client";
 
 // This defines your new type of node.
-export type CowsayPluginNode = ChartNode<
-  "cowsayPlugin",
-  CowsayPluginNodeData
+export type RealtimeAgentPluginNode = ChartNode<
+  "realtimeagentPlugin",
+  RealtimeAgentPluginNodeData
 >;
 
 // This defines the data that your new node will store.
-export type CowsayPluginNodeData = {
-  someData: string;
-  SK: string;
-  prompt: string;
-  stdout: string;
-  stderr: string;
+export type RealtimeAgentPluginNodeData = {
+  module: string;
+  input: string;
+  binary_path:string
   // It is a good idea to include useXInput fields for any inputs you have, so that
   // the user can toggle whether or not to use an import port for them.
   useSomeDataInput?: boolean;
@@ -43,29 +39,27 @@ export type CowsayPluginNodeData = {
 
 // Make sure you export functions that take in the Rivet library, so that you do not
 // import the entire Rivet core library in your plugin.
-export function cowsayPluginNode(rivet: typeof Rivet) {
+export function realtimeagentPluginNode(rivet: typeof Rivet) {
   // This is your main node implementation. It is an object that implements the PluginNodeImpl interface.
-  const CowsayPluginNodeImpl: PluginNodeImpl<CowsayPluginNode> = {
+  const RealtimeAgentPluginNodeImpl: RealtimeAgentNodeImpl<RealtimeAgentPluginNode> = {
     // This should create a new instance of your node type from scratch.
-    create(): CowsayPluginNode {
-      const node: CowsayPluginNode = {
+    create(): RealtimeAgentPluginNode {
+      const node: RealtimeAgentPluginNode = {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId<NodeId>(),
 
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP",
-          SK:"",
-          prompt: "",
-          stdout: "",
-          stderr: "",
+          module: "github.com/noryev/module-sdxl-ipfs:ae17e969cadab1c53d7cabab1927bb403f02fd2a",
+          input:"prompt=cow",
+          binary_path:"outputs/output.png"
         },
 
         // This is the default title of your node.
-        title: "Cowsay",
+        title: "Realtime Agent",
 
         // This must match the type of your node.
-        type: "cowsayPlugin",
+        type: "realtimeagentPlugin",
 
         // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
         visualData: {
@@ -80,26 +74,30 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
     // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getInputDefinitions(
-      data: CowsayPluginNodeData,
+      data: RealtimeAgentPluginNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
       _project: Project
     ): NodeInputDefinition[] {
       const inputs: NodeInputDefinition[] = [];
-      console.log("data",data)
+
       if (data.useSomeDataInput) {
-      }
-        inputs.push({
-          id: "prompt" as PortId,
-          dataType: "string",
-          title: "Prompt",
-        });
         // inputs.push({
-        //   id: "SK" as PortId,
+        //   id: "module" as PortId,
         //   dataType: "string",
-        //   title: "Secret Key",
+        //   title: "module",
         // });
-   
+        // inputs.push({
+        //   id: "input" as PortId,
+        //   dataType: "string",
+        //   title: "input",
+        // });
+        // inputs.push({
+        //   id: "json" as PortId,
+        //   dataType: "string",
+        //   title: "input",
+        // });
+      }
 
       return inputs;
     },
@@ -107,26 +105,26 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
     // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getOutputDefinitions(
-      _data: CowsayPluginNodeData,
+      _data: RealtimeAgentPluginNodeData,
       _connections: NodeConnection[],
       _nodes: Record<NodeId, ChartNode>,
       _project: Project
     ): NodeOutputDefinition[] {
       return [
         {
-          id: "STDOUTData" as PortId,
+          id: "stdout" as PortId,
           dataType: "string",
-          title: "STDOUT",
-        },
-        {
-          id: "STDERRData" as PortId,
-          dataType: "string",
-          title: "STDERR",
+          title: "URL",
         },
         // {
-        //   id: "SK" as PortId,
+        //   id: "stderr" as PortId,
         //   dataType: "string",
-        //   title: "Secret Key",
+        //   title: "stderr",
+        // },
+        // {
+        //   id: "binary" as PortId,
+        //   dataType: "any",
+        //   title: "binary",
         // },
       ];
     },
@@ -134,37 +132,35 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
     // This returns UI information for your node, such as how it appears in the context menu.
     getUIData(): NodeUIData {
       return {
-        contextMenuTitle: "Cowsay",
+        contextMenuTitle: "Realtime Agent",
         group: "Lilypad",
-        infoBoxBody: "This is an example plugin node.",
-        infoBoxTitle: "Example Plugin Node",
+        infoBoxBody: "This a Lilypad Realtime Agent plugin node.",
+        infoBoxTitle: "Realtime Agent Plugin",
       };
     },
 
-
-
     // This function defines all editors that appear when you edit your node.
     getEditors(
-      _data: CowsayPluginNodeData
-    ): EditorDefinition<CowsayPluginNode>[] {
+      _data: RealtimeAgentPluginNodeData
+    ): EditorDefinition<RealtimeAgentPluginNode>[] {
       return [
         // {
         //   type: "string",
-        //   dataKey: "someData",
+        //   dataKey: "module",
         //   useInputToggleDataKey: "useSomeDataInput",
-        //   label: "Some Data",
+        //   label: "module",
         // },
-        {
-          type: "string",
-          dataKey: "prompt",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Prompt",
-        },
         // {
         //   type: "string",
-        //   dataKey: "SK",
+        //   dataKey: "input",
         //   useInputToggleDataKey: "useSomeDataInput",
-        //   label: "Secret Key",
+        //   label: "input",
+        // },
+        // {
+        //   type: "string",
+        //   dataKey: "binary_path",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "binary path",
         // },
       ];
     },
@@ -172,97 +168,87 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(
-      data: CowsayPluginNodeData
-    ): string | NodeBodySpec | NodeBodySpec[] | undefined {
-      return rivet.dedent`
-        Prompt:
-        ${!data.prompt ? "(Using Input)" : data.prompt}
-      `;
+      data: RealtimeAgentPluginNodeData
+    ): string | MarkdownNodeBodySpec | MarkdownNodeBodySpec[] | undefined {
+      // const b:MarkdownNodeBodySpec = {type:"markdown",text:`![Alt text](https://file-examples.com/wp-content/storage/2017/04/file_example_MP4_480_1_5MG.mp4)`}  ;
+      const b:MarkdownNodeBodySpec = {type:"markdown",text:`<iframe onload="console.log(parent.postMessage('test'))" frameborder="0"  height="100%"  width="100%" src=https://file-examples.com/wp-content/storage/2017/04/file_example_MP4_480_1_5MG.mp4 />[![Watch the video](https://file-examples.com/wp-content/storage/2017/04/file_example_MP4_480_1_5MG.mp4)](https://file-examples.com/wp-content/storage/2017/04/file_example_MP4_480_1_5MG.mp4)`}  ;
+      
+      // MarkdownNodeBodySpec.fromMarkdown(``)
+      // const body = .fromMarkdown(`
+     
+      //   ## test
+      //   Module: ${data.useSomeDataInput ? "(Using Input)" : data.module}
+      //   Input: ${data.useSomeDataInput ? "(Using Input)" : data.input}
+      // `);
+      return b
     },
 
     // This is the main processing function for your node. It can do whatever you like, but it must return
     // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
     // must also correspond to the output definitions you defined in the getOutputDefinitions function.
-    async process(
-      data: CowsayPluginNodeData,
+async process(
+      data: RealtimeAgentPluginNodeData,
       inputData: Inputs,
       _context: InternalProcessContext
     ): Promise<Outputs> {
       console.log("inputData",inputData,data)
-      const prompt = rivet.getInputOrData(
+      const input = rivet.getInputOrData(
         data,
         inputData,
-        "prompt",
+        "input",
         "string"
       );
-      console.log("prompt1",prompt)
-    //  const result = await fetch("https://jsonplaceholder.typicode.com/posts" )
-
-    // const r = await fetch("http://localhost:4000/ping");
-    // console.log(r)
-    // // console.log(await r.text());
+      const module = rivet.getInputOrData(
+        data,
+        inputData,
+        "module",
+        "string"
+      );
+      const binary_path = rivet.getInputOrData(
+        data,
+        inputData,
+        "binary_path",
+        "string"
+      );
     const api = _context.getPluginConfig('api') || 'no api url. check plugin config';
     const sk = _context.getPluginConfig('sk') || 'no sk url check plugin config';
-    // const payload = {
-    //   pk: sk,
-    //   module: someData.split(",")[0],
-    //   inputs: `-i "${someData.split(",")[1]}="`,
-    //   stream: "true"
-    // };
-    // const result = await fetch("http://localhost:4000", {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     // 'Authorization': `Bearer ${apisk}`
-    //   },
-    //   body: JSON.stringify(payload)
-    // });
-   
-
-    // import { Client } from "@gradio/client";
-
-  // const client = await Client.connect("http://localhost:7860/");
-  // const result1 = await client.predict("/run", { 		
-  //     dropdown: "cowsay:v0.0.4,Message", 		
-  //     prompt: "Hello!!", 
-  // });
-
-  // console.log(result1.data);
+    const payload = {
+      pk: sk,
+      module: module,
+      inputs: `-i "${input}"`,
+      format: "json",
+      stream: "true"
+    };
+    const result = await fetch(api, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
     
-    const s = "await result " 
-    // const tar = await result.blob();
-    // const files = await untarBlob(tar);
-    // console.log("files", files);
-
-    // try {
-    //   const files = await untarBlob(tar);
-    //   console.log("files", files);
-    //   for (const file of files) {
-    //     console.log(`Extracted file: ${file.name}`);
-    //   }
-    // } catch (error) {
-    //   console.error("Error extracting tar file:", error);
-    // }
-
-    // console.log("Received tar file:", tar);
-
-    const { runModuleScript: runModule } = await import("../nodeEntry");
-    const output = await runModule(_context,"cowsay:v0.0.4", "Message="+prompt);
-    const decodedOutput = Buffer.from(output.stdout, 'base64').toString('utf-8');
-    const decodedErr = Buffer.from(output.stderr, 'base64').toString('utf-8');
-    // const decodedOutput = prompt  
+    const json = await result.json()
+    const decodedOutput = atob(json.stdout)
+    const decodedErr = atob(json.stderr);
+    let binary = null
+    if(json[binary_path] != undefined){
+      const img = atob(json[binary_path]);
+      const imgBuffer = Uint8Array.from(img, c => c.charCodeAt(0));
+      // console.log("imgBuffer",imgBuffer)
+      binary = imgBuffer
+    }
     return {
-        // ["someData" as PortId]: {
-        //   type: "string",
-        //   value: decodedOutput,
-        // },
-        ["STDOUTData" as PortId]: {
+        ["stdout" as PortId]: {
           type: "string",
           value: decodedOutput,
         },
-        ["STDERRData" as PortId]: {
+        ["stderr" as PortId]: {
           type: "string",
           value: decodedErr,
+        },
+        ["binary" as PortId]: {
+          type: "any",
+          value: binary,
         },
       };
     },
@@ -270,11 +256,11 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
 
   // Once a node is defined, you must pass it to rivet.pluginNodeDefinition, which will return a valid
   // PluginNodeDefinition object.
-  const cowsayPluginNode = rivet.pluginNodeDefinition(
-    CowsayPluginNodeImpl,
-    "Example Plugin"
+  const realtimeagentPluginNode = rivet.pluginNodeDefinition(
+    RealtimeAgentPluginNodeImpl,
+    "RealtimeAgent Plugin"
   );
 
   // This definition should then be used in the `register` function of your plugin definition.
-  return cowsayPluginNode;
+  return realtimeagentPluginNode;
 }

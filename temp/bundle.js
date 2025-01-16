@@ -7,7 +7,7 @@ function examplePluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId(),
         // This is the default data that your node will store
-        data: {
+        filedata: {
           someData: "Hello World From LP!!!",
           SK: ""
         },
@@ -127,7 +127,7 @@ function cowsayPluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId(),
         // This is the default data that your node will store
-        data: {
+        filedata: {
           someData: "Hello World From LP",
           SK: "",
           prompt: "",
@@ -151,7 +151,6 @@ function cowsayPluginNode(rivet) {
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getInputDefinitions(data, _connections, _nodes, _project) {
       const inputs = [];
-      console.log("data", data);
       if (data.useSomeDataInput) {
       }
       inputs.push({
@@ -237,7 +236,7 @@ function cowsayPluginNode(rivet) {
       const api = _context.getPluginConfig("api") || "no api url. check plugin config";
       const sk = _context.getPluginConfig("sk") || "no sk url check plugin config";
       const s = "await result ";
-      const { runModuleScript: runModule } = await import("../dist/nodeEntry.cjs");
+      const { runModuleScript: runModule } = await import("./nodeEntry.cjs");
       const output = await runModule(_context, "cowsay:v0.0.4", "Message=" + prompt);
       const decodedOutput = Buffer.from(output.stdout, "base64").toString("utf-8");
       const decodedErr = Buffer.from(output.stderr, "base64").toString("utf-8");
@@ -273,7 +272,7 @@ function searchAgentPluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId(),
         // This is the default data that your node will store
-        data: {
+        filedata: {
           someData: "Hello World From LP!!!"
           // SK:""
         },
@@ -389,7 +388,7 @@ function paperReaderAgentPluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId(),
         // This is the default data that your node will store
-        data: {
+        filedata: {
           someData: "Hello World From LP!!!"
           // SK:""
         },
@@ -505,7 +504,7 @@ function oncologistAgentPluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId(),
         // This is the default data that your node will store
-        data: {
+        filedata: {
           someData: "Hello World From LP!!!"
           // SK:""
         },
@@ -620,7 +619,7 @@ function proteinDesignerAgentPluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId(),
         // This is the default data that your node will store
-        data: {
+        filedata: {
           someData: "Hello World From LP!!!"
           // SK:""
         },
@@ -735,7 +734,7 @@ function gradioPluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId(),
         // This is the default data that your node will store
-        data: {
+        filedata: {
           someData: "Hello World From LP!!!",
           SK: ""
         },
@@ -877,7 +876,7 @@ function agentPluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId(),
         // This is the default data that your node will store
-        data: {
+        filedata: {
           module: "github.com/noryev/module-sdxl-ipfs:ae17e969cadab1c53d7cabab1927bb403f02fd2a",
           input: "prompt=cow",
           binary_path: "outputs/output.png"
@@ -893,7 +892,7 @@ function agentPluginNode(rivet) {
           width: 200
         }
       };
-      node.data.useSomeDataInput = true;
+      node.filedata.useSomeDataInput = true;
       return node;
     },
     // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
@@ -1068,6 +1067,148 @@ function agentPluginNode(rivet) {
   return agentPluginNode2;
 }
 
+// src/nodes/MediaPluginNode.ts
+function mediaPluginNode(rivet) {
+  const MediaPluginNodeImpl = {
+    // This should create a new instance of your node type from scratch.
+    create() {
+      const node = {
+        // Use rivet.newId to generate new IDs for your nodes.
+        id: rivet.newId(),
+        filedata: {
+          useDataInput: false,
+          mediaType: "image/png",
+          useMediaTypeInput: false
+        },
+        // This is the default data that your node will store
+        // data: {
+        //   data:{
+        //     refId: rivet.newId<DataId>(),
+        //     // type: "binary",
+        //   }
+        //   // someData: "about:blank",
+        //   // SK: "",
+        //   // image: new Image()
+        // },
+        // This is the default title of your node.
+        title: "Media",
+        // This must match the type of your node.
+        type: "mediaPlugin",
+        // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
+        visualData: {
+          x: 0,
+          y: 0,
+          width: 200
+        }
+      };
+      return node;
+    },
+    // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getInputDefinitions(data, _connections, _nodes, _project) {
+      const inputs = [];
+      return inputs;
+    },
+    // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getOutputDefinitions(_data, _connections, _nodes, _project) {
+      return [
+        // {
+        //   id: "someData" as PortId,
+        //   dataType: "string",
+        //   title: "Some Data",
+        // },
+        // {
+        //   id: "SK" as PortId,
+        //   dataType: "binary",
+        //   title: "Secret Key",
+        // },
+      ];
+    },
+    // This returns UI information for your node, such as how it appears in the context menu.
+    getUIData() {
+      return {
+        contextMenuTitle: "Media",
+        group: "Lilypad",
+        infoBoxBody: "This is an example plugin node.",
+        infoBoxTitle: "Media Plugin Node"
+      };
+    },
+    // This function defines all editors that appear when you edit your node.
+    getEditors(_data) {
+      console.log(_data);
+      return [
+        {
+          type: "fileBrowser",
+          dataKey: "filedata",
+          mediaTypeDataKey: "mediaType",
+          useInputToggleDataKey: "useDataInput",
+          label: "File Path"
+        }
+        // {
+        //   type: "string",
+        //   dataKey: "someData",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Some Data",
+        // },
+        // {
+        //   type: "string",
+        //   dataKey: "SK",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Secret Key",
+        // },
+      ];
+    },
+    // This function returns the body of the node when it is rendered on the graph. You should show
+    // what the current data of the node is in some way that is useful at a glance.
+    getBody(data, c) {
+      let _context = c;
+      const iframeHeight = window.innerHeight / 2;
+      return {
+        type: "markdown",
+        text: `<iframe id="asdf" 
+              onload="try {
+                  // const doc = this.contentDocument || this.contentWindow.document;
+                  // console.log(getElementById('asdf').src);
+                  // console.log(this.getElementById('iframe').contentWindow.document.body.scrollHeight);
+                  this.style.height = 500 + 'px';
+                  //  console.log(this.height =1000);
+                  //  console.log(doc.documentElement.scrollHeight);
+               } catch (e) {
+                   console.error('Unable to access iframe content:', e);
+               }"
+              frameborder="0"  
+              width="100%" 
+           
+              />
+              `
+      };
+    },
+    // This is the main processing function for your node. It can do whatever you like, but it must return
+    // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
+    // must also correspond to the output definitions you defined in the getOutputDefinitions function.
+    async process(data, inputData, _context) {
+      const dataRef = data.filedata?.refId;
+      let d = _context.project.data;
+      console.log("d", d[dataRef]);
+      console.log(data.filedata?.refId);
+      const encodedData = _context.project.data[dataRef];
+      const result = await fetch("https://jsonplaceholder.typicode.com/posts");
+      return {
+        ["image"]: {
+          type: "string",
+          value: "<img>test</img>"
+        }
+      };
+    }
+  };
+  const mediaPluginNode2 = rivet.pluginNodeDefinition(
+    MediaPluginNodeImpl,
+    "Media Plugin"
+  );
+  return mediaPluginNode2;
+}
+
 // src/nodes/IpfsPluginNode.ts
 function ipfsPluginNode(rivet) {
   const IpfsPluginNodeImpl = {
@@ -1078,7 +1219,7 @@ function ipfsPluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id,
         // This is the default data that your node will store
-        data: {
+        filedata: {
           someData: "Hello World From LP!!!",
           SK: "",
           id
@@ -1280,7 +1421,7 @@ function walletPluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId(),
         // This is the default data that your node will store
-        data: {
+        filedata: {
           LP: "23",
           ETH: "12"
         },
@@ -1351,8 +1492,7 @@ function walletPluginNode(rivet) {
     // what the current data of the node is in some way that is useful at a glance.
     getBody(data) {
       return rivet.dedent`
-
-        LP: ${data.useSomeDataInput ? "(Using Input)" : data.ETH}
+        ETH: ${data.useSomeDataInput ? "(Using Input)" : data.ETH}
         LP: ${data.useSomeDataInput ? "(Using Input)" : data.LP}
       `;
     },
@@ -1391,7 +1531,7 @@ function realtimeagentPluginNode(rivet) {
         // Use rivet.newId to generate new IDs for your nodes.
         id: rivet.newId(),
         // This is the default data that your node will store
-        data: {
+        filedata: {
           module: "github.com/noryev/module-sdxl-ipfs:ae17e969cadab1c53d7cabab1927bb403f02fd2a",
           input: "prompt=cow",
           binary_path: "outputs/output.png"
@@ -1557,6 +1697,7 @@ var plugin = (rivet) => {
   const proteinDesignerNode = proteinDesignerAgentPluginNode(rivet);
   const gradionNode = gradioPluginNode(rivet);
   const agentNode = agentPluginNode(rivet);
+  const mediaNode = mediaPluginNode(rivet);
   const ipfsNode = ipfsPluginNode(rivet);
   const walletsNode = walletPluginNode(rivet);
   const realtimeagentNode = realtimeagentPluginNode(rivet);
@@ -1602,6 +1743,7 @@ var plugin = (rivet) => {
       register(proteinDesignerNode);
       register(gradionNode);
       register(agentNode);
+      register(mediaNode);
       register(ipfsNode);
       register(walletsNode);
       register(realtimeagentNode);

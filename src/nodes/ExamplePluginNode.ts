@@ -18,7 +18,7 @@ import type {
   PortId,
   Project,
   Rivet,
-} from "@ironclad/rivet-core";
+} from "../../node_modules/@ironclad/rivet-core/dist/types";
 
 // This defines your new type of node.
 export type ExamplePluginNode = ChartNode<
@@ -120,7 +120,7 @@ export function examplePluginNode(rivet: typeof Rivet) {
     getUIData(): NodeUIData {
       return {
         contextMenuTitle: "Example",
-        group: "BioMl",
+        group: "Lilypad",
         infoBoxBody: "This is an example plugin node.",
         infoBoxTitle: "Example Plugin Node",
       };

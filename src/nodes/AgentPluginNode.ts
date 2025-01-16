@@ -18,7 +18,7 @@ import type {
   PortId,
   Project,
   Rivet,
-} from "@ironclad/rivet-core";
+} from "../../node_modules/@ironclad/rivet-core/dist/types";
 
 // This defines your new type of node.
 export type AgentPluginNode = ChartNode<
@@ -34,6 +34,7 @@ export type AgentPluginNodeData = {
   // It is a good idea to include useXInput fields for any inputs you have, so that
   // the user can toggle whether or not to use an import port for them.
   useSomeDataInput?: boolean;
+  useipfsInput?: boolean ;
 };
 
 // Make sure you export functions that take in the Rivet library, so that you do not
@@ -67,6 +68,7 @@ export function agentPluginNode(rivet: typeof Rivet) {
           width: 200,
         },
       };
+      node.data.useSomeDataInput = true;
       return node;
     },
 
@@ -94,9 +96,27 @@ export function agentPluginNode(rivet: typeof Rivet) {
         inputs.push({
           id: "json" as PortId,
           dataType: "string",
-          title: "input",
+          title: "json",
         });
       }
+      if (data.useipfsInput) {
+        inputs.push({
+          id: "module" as PortId,
+          dataType: "string",
+          title: "module",
+        });
+        inputs.push({
+          id: "input" as PortId,
+          dataType: "string",
+          title: "input",
+        });
+        inputs.push({
+          id: "json" as PortId,
+          dataType: "string",
+          title: "json",
+        });
+      }
+
 
       return inputs;
     },
@@ -132,7 +152,7 @@ export function agentPluginNode(rivet: typeof Rivet) {
     getUIData(): NodeUIData {
       return {
         contextMenuTitle: "Agent",
-        group: "BioMl",
+        group: "Lilypad",
         infoBoxBody: "This a Lilypad Agent plugin node.",
         infoBoxTitle: "Agent Plugin",
       };
@@ -152,7 +172,7 @@ export function agentPluginNode(rivet: typeof Rivet) {
         {
           type: "string",
           dataKey: "input",
-          useInputToggleDataKey: "useSomeDataInput",
+          useInputToggleDataKey: "useipfsInput",
           label: "input",
         },
         {
