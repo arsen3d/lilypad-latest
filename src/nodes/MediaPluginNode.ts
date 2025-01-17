@@ -22,8 +22,13 @@ import {
   type PluginNodeImpl,
   type PortId,
   type Project,
+  type GetGlobalNodeData
 } from "../../node_modules/@ironclad/rivet-core/dist/types";
+import {
+type RivetUIContext,
+} from "../../node_modules/@ironclad/rivet-core/dist/types/model/RivetUIContext";
 
+// import { setGlobalDataRef } from '../../node_modules/@ironclad/rivet-core/dist/esm/model/nodes/';
 
 // import { type Rivet } from '@ironclad/rivet-core';
 // This defines your new type of node.
@@ -36,8 +41,9 @@ export type MediaPluginNode = ChartNode<
 export type MediaPluginNodeData = {
   data?: DataRef;
   useDataInput: boolean;
-  mediaType: 'image/png' | 'image/jpeg' | 'image/gif';
+  mediaType: 'image/png' | 'image/jpeg' | 'image/gif | binary';
   useMediaTypeInput: boolean;
+  // type: "binary";
   // dt: string;
   // sk: string;
   // image:HTMLImageElement
@@ -83,7 +89,7 @@ export function mediaPluginNode(rivet: typeof Rivet) {
         visualData: {
           x: 0,
           y: 0,
-          width: 200,
+          width: 400,
           
         },
       };
@@ -150,13 +156,16 @@ export function mediaPluginNode(rivet: typeof Rivet) {
 
     // This function defines all editors that appear when you edit your node.
     getEditors(
-      _data: MediaPluginNodeData
+      _data: MediaPluginNodeData,
+      context: RivetUIContext
     ): EditorDefinition<MediaPluginNode>[] {
-      console.log(_data)
+      // console.log("_data",_data)
+      console.log(context.project)
       return [
         {
           type: "fileBrowser",
           dataKey: "data",
+          
           mediaTypeDataKey: "mediaType",
           useInputToggleDataKey: "useDataInput",
           label: "File Path",
@@ -184,9 +193,18 @@ export function mediaPluginNode(rivet: typeof Rivet) {
       c:any
     ): string | MarkdownNodeBodySpec | MarkdownNodeBodySpec[] | undefined {
 
-
+      // let g = new GetGlobalNodeData(c)
+      let y = rivet.getInputOrData(data, c, "data", "object")
+      console.log("rivet",rivet)
       let _context = c as InternalProcessContext;
-      // console.log(_context)
+      let ui = _context as RivetUIContext
+      console.log("this",data)
+      console.log("ui",ui)
+      console.log(data)
+      console.log(_context)
+
+      this.process(data, c.inputs , c)
+      // process(data, null, c)
       // console.log(data.data?.refId)
             // const someData = rivet.getInputOrData(
             //   data,
@@ -204,7 +222,7 @@ export function mediaPluginNode(rivet: typeof Rivet) {
             //  const x =  (_context.project.data as Record<string, string>)[data.data?.refId as string]  ;
             // // console.log("x",base64ToUint8Array(x))
             // console.log("x",x)
-            const iframeHeight = window.innerHeight/2;
+            // const iframeHeight = window.innerHeight/2;
             return ({
               type: "markdown",
               text: `<iframe id="asdf" 
@@ -212,7 +230,7 @@ export function mediaPluginNode(rivet: typeof Rivet) {
                   // const doc = this.contentDocument || this.contentWindow.document;
                   // console.log(getElementById('asdf').src);
                   // console.log(this.getElementById('iframe').contentWindow.document.body.scrollHeight);
-                  this.style.height = 500 + 'px';
+                  this.style.height = 100 + 'px';
                   //  console.log(this.height =1000);
                   //  console.log(doc.documentElement.scrollHeight);
                } catch (e) {
@@ -220,7 +238,7 @@ export function mediaPluginNode(rivet: typeof Rivet) {
                }"
               frameborder="0"  
               width="100%" 
-           
+              src="about:blank"
               />
               `
             });
@@ -236,6 +254,7 @@ export function mediaPluginNode(rivet: typeof Rivet) {
     // This is the main processing function for your node. It can do whatever you like, but it must return
     // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
     // must also correspond to the output definitions you defined in the getOutputDefinitions function.
+    /*
     async process(
       data: MediaPluginNodeData,
       inputData: Inputs,
@@ -287,11 +306,66 @@ export function mediaPluginNode(rivet: typeof Rivet) {
       return {
         ["image" as PortId]: {
           type:"string",
-          value:"<img>test</img>",
+          value:encodedData,
         },
       };
     },
-  };
+  */
+    async process(data: MediaPluginNodeData, inputData: Inputs, context: InternalProcessContext): Promise<Outputs> {
+      // let data: Uint8Array;
+      let mediaType: 'image/png' | 'image/jpeg' | 'image/gif';
+  
+      // if (this.chartNode.data.useDataInput) {
+      //   data = expectType(inputData['data' as PortId], 'binary');
+      // } else {
+      //   const dataRef = this.data.data?.refId;
+      //   if (!dataRef) {
+      //     throw new Error('No data ref');
+      //   }
+  
+      //   const encodedData = context.project.data?.[dataRef] as string;
+  
+      //   if (!encodedData) {
+      //     throw new Error(`No data at ref ${dataRef}`);
+      //   }
+  
+      //   data = base64ToUint8Array(encodedData);
+      // }
+  
+      // mediaType = this.chartNode.data.useMediaTypeInput
+      //   ? expectType(inputData['mediaType' as PortId], 'string')
+      //   : this.chartNode.data.mediaType;
+      const ref = data.data?.refId as string;
+      console.log("ref",ref)
+      const encodedData = context.project.data?.[ref as DataId] as string;
+      console.log(encodedData)
+      let d = base64ToUint8Array(encodedData)
+      mediaType = 'image/png';
+      console.log("d",d)  
+      return {
+        ['image' as PortId]: {
+          type: 'image',
+          value: { mediaType: mediaType as 'image/png' | 'image/jpeg' | 'image/gif', data:d },
+        },
+      };
+    }
+    };
+  
+ 
+function base64ToUint8Array(base64 : string): Uint8Array {
+    // Decode the Base64 string into a binary string
+    const binaryString = atob(base64);
+
+    // Create a Uint8Array with the same length as the binary string
+    const uint8Array = new Uint8Array(binaryString.length);
+
+    // Populate the Uint8Array with the character codes from the binary string
+    for (let i = 0; i < binaryString.length; i++) {
+        uint8Array[i] = binaryString.charCodeAt(i);
+    }
+
+    return uint8Array;
+}
 
   // Once a node is defined, you must pass it to rivet.pluginNodeDefinition, which will return a valid
   // PluginNodeDefinition object.

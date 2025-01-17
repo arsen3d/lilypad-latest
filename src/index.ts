@@ -11,10 +11,11 @@ import { oncologistAgentPluginNode } from "./nodes/OncologistAgentPluginNode.js"
 import { proteinDesignerAgentPluginNode } from "./nodes/ProteinDesignerAgentPluginNode.js";
 import { gradioPluginNode } from "./nodes/GradioPluginNode";
 import { agentPluginNode } from "./nodes/AgentPluginNode";
-// import { mediaPluginNode } from "./nodes/MediaPluginNode";
+import { mediaPluginNode } from "./nodes/MediaPluginNode";
 import { ipfsPluginNode } from "./nodes/IpfsPluginNode";
 import { walletPluginNode } from "./nodes/WalletPluginNode";
 import { realtimeagentPluginNode } from "./nodes/RealtimeAgentPluginNode";
+import { modulePluginNode } from "./nodes/ModulePluginNode.js";
 // A Rivet plugin must default export a plugin initializer function. This takes in the Rivet library as its
 // only parameter. This function must return a valid RivetPlugin object.
 const plugin: RivetPluginInitializer = (rivet) => {
@@ -27,10 +28,12 @@ const plugin: RivetPluginInitializer = (rivet) => {
   const proteinDesignerNode = proteinDesignerAgentPluginNode(rivet);
   const gradionNode = gradioPluginNode(rivet);
   const agentNode = agentPluginNode(rivet);
-  // const mediaNode = mediaPluginNode(rivet);
+  const mediaNode = mediaPluginNode(rivet);
   const ipfsNode = ipfsPluginNode(rivet);
   const walletsNode = walletPluginNode(rivet);
   const realtimeagentNode  = realtimeagentPluginNode(rivet);
+  const moduleNode  = modulePluginNode(rivet);
+  
   // The plugin object is the definition for your plugin.
   const examplePlugin: RivetPlugin = {
     // The ID of your plugin should be unique across all plugins.
@@ -78,10 +81,11 @@ const plugin: RivetPluginInitializer = (rivet) => {
       register(proteinDesignerNode);
       register(gradionNode);
       register(agentNode);
-      // register(mediaNode);
+      register(mediaNode);
       register(ipfsNode);
       register(walletsNode);
       register(realtimeagentNode);
+      register(moduleNode);
       
     },
   };

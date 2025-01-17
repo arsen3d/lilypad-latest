@@ -1068,6 +1068,222 @@ function agentPluginNode(rivet) {
   return agentPluginNode2;
 }
 
+// src/nodes/MediaPluginNode.ts
+function mediaPluginNode(rivet) {
+  const MediaPluginNodeImpl = {
+    // This should create a new instance of your node type from scratch.
+    create() {
+      const node = {
+        // Use rivet.newId to generate new IDs for your nodes.
+        id: rivet.newId(),
+        data: {
+          useDataInput: false,
+          mediaType: "image/png",
+          useMediaTypeInput: false
+        },
+        // This is the default data that your node will store
+        // data: {
+        //   data:{
+        //     refId: rivet.newId<DataId>(),
+        //     // type: "binary",
+        //   }
+        //   // someData: "about:blank",
+        //   // SK: "",
+        //   // image: new Image()
+        // },
+        // This is the default title of your node.
+        title: "Media",
+        // This must match the type of your node.
+        type: "mediaPlugin",
+        // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
+        visualData: {
+          x: 0,
+          y: 0,
+          width: 400
+        }
+      };
+      return node;
+    },
+    // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getInputDefinitions(data, _connections, _nodes, _project) {
+      const inputs = [];
+      return inputs;
+    },
+    // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getOutputDefinitions(_data, _connections, _nodes, _project) {
+      return [
+        // {
+        //   id: "someData" as PortId,
+        //   dataType: "string",
+        //   title: "Some Data",
+        // },
+        // {
+        //   id: "SK" as PortId,
+        //   dataType: "binary",
+        //   title: "Secret Key",
+        // },
+      ];
+    },
+    // This returns UI information for your node, such as how it appears in the context menu.
+    getUIData() {
+      return {
+        contextMenuTitle: "Media",
+        group: "Lilypad",
+        infoBoxBody: "This is an example plugin node.",
+        infoBoxTitle: "Media Plugin Node"
+      };
+    },
+    // This function defines all editors that appear when you edit your node.
+    getEditors(_data, context) {
+      console.log(context.project);
+      return [
+        {
+          type: "fileBrowser",
+          dataKey: "data",
+          mediaTypeDataKey: "mediaType",
+          useInputToggleDataKey: "useDataInput",
+          label: "File Path"
+        }
+        // {
+        //   type: "string",
+        //   dataKey: "someData",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Some Data",
+        // },
+        // {
+        //   type: "string",
+        //   dataKey: "SK",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Secret Key",
+        // },
+      ];
+    },
+    // This function returns the body of the node when it is rendered on the graph. You should show
+    // what the current data of the node is in some way that is useful at a glance.
+    getBody(data, c) {
+      let y = rivet.getInputOrData(data, c, "data", "object");
+      console.log("rivet", rivet);
+      let _context = c;
+      let ui = _context;
+      console.log("this", data);
+      console.log("ui", ui);
+      console.log(data);
+      console.log(_context);
+      this.process(data, c.inputs, c);
+      return {
+        type: "markdown",
+        text: `<iframe id="asdf" 
+              onload="try {
+                  // const doc = this.contentDocument || this.contentWindow.document;
+                  // console.log(getElementById('asdf').src);
+                  // console.log(this.getElementById('iframe').contentWindow.document.body.scrollHeight);
+                  this.style.height = 100 + 'px';
+                  //  console.log(this.height =1000);
+                  //  console.log(doc.documentElement.scrollHeight);
+               } catch (e) {
+                   console.error('Unable to access iframe content:', e);
+               }"
+              frameborder="0"  
+              width="100%" 
+              src="about:blank"
+              />
+              `
+      };
+    },
+    // This is the main processing function for your node. It can do whatever you like, but it must return
+    // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
+    // must also correspond to the output definitions you defined in the getOutputDefinitions function.
+    /*
+        async process(
+          data: MediaPluginNodeData,
+          inputData: Inputs,
+          _context: InternalProcessContext
+        ): Promise<Outputs> {
+    
+    
+          // let data: Uint8Array;
+    
+          // if (this.chartNode.data.useDataInput) {
+          //   data = expectType(inputData['data' as PortId], 'binary');
+          // } else {
+          const dataRef = data.data?.refId as string;
+          let d = _context.project.data as Record<string, string>;
+          console.log("d",d[dataRef])
+          console.log(data.data?.refId)
+          
+            // if (!dataRef) {
+            //   throw new Error('No data ref');
+            // }
+      
+            // const encodedData = _context.project.data?.[dataRef] as string;
+            const encodedData = (_context.project.data as Record<string, string>)[dataRef]
+            // if (!encodedData) {
+            //   throw new Error(`No data at ref ${dataRef}`);
+            // }
+      
+          //   data = base64ToUint8Array(encodedData);
+          // }
+      
+          // const mediaType = this.chartNode.data.useMediaTypeInput
+          //   ? expectType(inputData['mediaType' as PortId], 'string')
+          //   : this.chartNode.data.mediaType;
+    
+          // const someData = rivet.getInputOrData(
+          //   data,
+          //   inputData,
+          //   "SK",
+          //   "object"
+          // );
+          // console.log(someData)
+          // let ref = someData["refId"] as string;
+          // const ref = data.data?.refId as string;
+          // let x =  (_context.project.data as Record<string, string>)[ref]  ;
+          // console.log("x",base64ToUint8Array(x))
+          // const encodedData = _context.project.data?.[someData] as string;
+          const result = await fetch("https://jsonplaceholder.typicode.com/posts" )
+         
+          return {
+            ["image" as PortId]: {
+              type:"string",
+              value:encodedData,
+            },
+          };
+        },
+      */
+    async process(data, inputData, context) {
+      let mediaType;
+      const ref = data.data?.refId;
+      console.log("ref", ref);
+      const encodedData = context.project.data?.[ref];
+      console.log(encodedData);
+      let d = base64ToUint8Array(encodedData);
+      mediaType = "image/png";
+      console.log("d", d);
+      return {
+        ["image"]: {
+          type: "image",
+          value: { mediaType, data: d }
+        }
+      };
+    }
+  };
+  function base64ToUint8Array(base64) {
+    const binaryString = atob(base64);
+    const uint8Array = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      uint8Array[i] = binaryString.charCodeAt(i);
+    }
+    return uint8Array;
+  }
+  const mediaPluginNode2 = rivet.pluginNodeDefinition(
+    MediaPluginNodeImpl,
+    "Media Plugin"
+  );
+  return mediaPluginNode2;
+}
+
 // src/nodes/IpfsPluginNode.ts
 function ipfsPluginNode(rivet) {
   const IpfsPluginNodeImpl = {
@@ -1547,6 +1763,267 @@ function realtimeagentPluginNode(rivet) {
   return realtimeagentPluginNode2;
 }
 
+// src/nodes/ModulePluginNode.ts
+function modulePluginNode(rivet) {
+  const ModulePluginNodeImpl = {
+    // This should create a new instance of your node type from scratch.
+    create() {
+      const id = rivet.newId();
+      const node = {
+        // Use rivet.newId to generate new IDs for your nodes.
+        id,
+        // This is the default data that your node will store
+        data: {
+          module: "github.com/noryev/module-sdxl-ipfs:ae17e969cadab1c53d7cabab1927bb403f02fd2a",
+          input: "prompt=cow",
+          binary_path: "outputs/output.png",
+          id
+        },
+        // This is the default title of your node.
+        title: "Module",
+        // This must match the type of your node.
+        type: "modulePlugin",
+        // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
+        visualData: {
+          x: 0,
+          y: 0,
+          width: 200
+        }
+      };
+      node.data.useSomeDataInput = true;
+      return node;
+    },
+    // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getInputDefinitions(data, _connections, _nodes, _project) {
+      const inputs = [];
+      const filteredNodes = Object.values(_connections).filter((node) => node.inputNodeId === data.id);
+      for (let i = 1; i <= filteredNodes.length + 1; i++) {
+        inputs.push({
+          dataType: "any",
+          id: `input${i}`,
+          title: `Input ${i}`,
+          description: 'An input to create the array from. If an array, will be flattened if the "Flatten" option is enabled.'
+        });
+      }
+      return inputs;
+    },
+    // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getOutputDefinitions(_data, _connections, _nodes, _project) {
+      return [
+        {
+          id: "stdout",
+          dataType: "string",
+          title: "stdout"
+        },
+        {
+          id: "stderr",
+          dataType: "string",
+          title: "stderr"
+        },
+        {
+          id: "binary",
+          dataType: "any",
+          title: "binary"
+        }
+      ];
+    },
+    // This returns UI information for your node, such as how it appears in the context menu.
+    getUIData() {
+      return {
+        contextMenuTitle: "Module",
+        group: "Lilypad",
+        infoBoxBody: "This a Lilypad Module plugin node.",
+        infoBoxTitle: "Module Plugin"
+      };
+    },
+    // This function defines all editors that appear when you edit your node.
+    getEditors(_data) {
+      return [
+        {
+          type: "string",
+          dataKey: "module",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "module"
+        },
+        // {
+        //   type: "string",
+        //   dataKey: "input",
+        //   useInputToggleDataKey: "useipfsInput",
+        //   label: "input",
+        // },
+        {
+          type: "string",
+          dataKey: "binary_path",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "binary path"
+        }
+      ];
+    },
+    // This function returns the body of the node when it is rendered on the graph. You should show
+    // what the current data of the node is in some way that is useful at a glance.
+    getBody(data) {
+      return rivet.dedent`
+ 
+    `;
+    },
+    // This is the main processing function for your node. It can do whatever you like, but it must return
+    // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
+    // must also correspond to the output definitions you defined in the getOutputDefinitions function.
+    async process(data, inputData, _context) {
+      async function addFileToIPFS(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await fetch("http://localhost:5001/api/v0/add", {
+          // mode: "no-cors",
+          method: "POST",
+          body: formData
+        });
+      }
+      console.log(inputData);
+      let cid_out = await (async () => {
+        const inputCount = Object.keys(inputData).filter((key) => key.startsWith("input")).length;
+        const formData = new FormData();
+        for (let i = 1; i <= inputCount; i++) {
+          const input2 = inputData[`input${i}`];
+          const val = input2.value;
+          const t = input2.type;
+          console.log("val", val);
+          console.log("Type of val:", typeof val);
+          if (val instanceof Object && typeof t === "string") {
+            const file = new Blob([val.data], { type: val.mediaType });
+            const extension = val.mediaType.split("/")[1];
+            formData.append("file", file, `input${i}.${extension}`);
+          } else {
+            const file = new Blob([val], { type: "text/plain" });
+            formData.append("file", file, `input${i}.txt`);
+          }
+        }
+        let return_cid;
+        const response = await fetch("http://localhost:5001/api/v0/add?wrap-with-directory=true", {
+          method: "POST",
+          body: formData
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        let txt = (await response.text()).trim().split("\n");
+        console.log("IPFS Response:\n", JSON.parse(txt[txt.length - 1]));
+        const result2 = JSON.parse(txt[txt.length - 1]);
+        console.log(result2);
+        return_cid = result2.Hash;
+        const params = {
+          arg: ["/ipfs/" + result2.Hash, ""]
+        };
+        const paramsSerializer = (params2) => {
+          return Object.keys(params2).map((key) => {
+            const value = params2[key];
+            if (Array.isArray(value)) {
+              return value.map((v) => `${encodeURIComponent(key)}=${encodeURIComponent(v)}`).join("&");
+            }
+            return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+          }).join("&");
+        };
+        const cid = result2.Hash;
+        const fileName = "inputs";
+        const checkUrl = new URL("http://localhost:5001/api/v0/files/stat");
+        checkUrl.search = paramsSerializer({
+          arg: ["/" + fileName]
+        });
+        const checkResponse = await fetch(checkUrl.toString(), {
+          method: "POST"
+        });
+        if (checkResponse.ok) {
+          console.log(`File ${fileName} already exists.`);
+        } else {
+          const url = new URL("http://localhost:5001/api/v0/files/cp");
+          url.search = paramsSerializer({
+            arg: ["/ipfs/" + cid, "/" + fileName]
+          });
+          const copyResponse = await fetch(url.toString(), {
+            method: "POST"
+          });
+          if (!copyResponse.ok) {
+            throw new Error(`HTTP error! Status: ${copyResponse.status}`);
+          }
+          const copyResult = await copyResponse.text();
+          console.log("IPFS Copy Response:", copyResult);
+          console.log("IPFS Response:", result2);
+        }
+        try {
+        } catch (error) {
+          console.error("Error:", error);
+        }
+        return return_cid;
+      })();
+      console.log("inputData", inputData, data);
+      const input = rivet.getInputOrData(
+        data,
+        inputData,
+        "input",
+        "string"
+      );
+      const module = rivet.getInputOrData(
+        data,
+        inputData,
+        "module",
+        "string"
+      );
+      const binary_path = rivet.getInputOrData(
+        data,
+        inputData,
+        "binary_path",
+        "string"
+      );
+      const api = _context.getPluginConfig("api") || "no api url. check plugin config";
+      const sk = _context.getPluginConfig("sk") || "no sk url check plugin config";
+      const payload = {
+        pk: sk,
+        module,
+        inputs: `-i "IPFS=${cid_out}"`,
+        format: "json",
+        stream: "true"
+      };
+      const result = await fetch(api, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      const json = await result.json();
+      const decodedOutput = atob(json.stdout);
+      const decodedErr = atob(json.stderr);
+      let binary = null;
+      if (json[binary_path] != void 0) {
+        const img = atob(json[binary_path]);
+        const imgBuffer = Uint8Array.from(img, (c) => c.charCodeAt(0));
+        binary = imgBuffer;
+      }
+      return {
+        ["stdout"]: {
+          type: "string",
+          value: decodedOutput
+        },
+        ["stderr"]: {
+          type: "string",
+          value: decodedErr
+        },
+        ["binary"]: {
+          type: "any",
+          value: binary
+        }
+      };
+    }
+  };
+  const modulePluginNode2 = rivet.pluginNodeDefinition(
+    ModulePluginNodeImpl,
+    "Module Plugin"
+  );
+  return modulePluginNode2;
+}
+
 // src/index.ts
 var plugin = (rivet) => {
   const exampleNode = examplePluginNode(rivet);
@@ -1557,9 +2034,11 @@ var plugin = (rivet) => {
   const proteinDesignerNode = proteinDesignerAgentPluginNode(rivet);
   const gradionNode = gradioPluginNode(rivet);
   const agentNode = agentPluginNode(rivet);
+  const mediaNode = mediaPluginNode(rivet);
   const ipfsNode = ipfsPluginNode(rivet);
   const walletsNode = walletPluginNode(rivet);
   const realtimeagentNode = realtimeagentPluginNode(rivet);
+  const moduleNode = modulePluginNode(rivet);
   const examplePlugin = {
     // The ID of your plugin should be unique across all plugins.
     id: "example-plugin-lp",
@@ -1602,9 +2081,11 @@ var plugin = (rivet) => {
       register(proteinDesignerNode);
       register(gradionNode);
       register(agentNode);
+      register(mediaNode);
       register(ipfsNode);
       register(walletsNode);
       register(realtimeagentNode);
+      register(moduleNode);
     }
   };
   return examplePlugin;
