@@ -2088,9 +2088,9 @@ var plugin = (rivet) => {
   const walletsNode = walletPluginNode(rivet);
   const realtimeagentNode = realtimeagentPluginNode(rivet);
   const moduleNode = modulePluginNode(rivet);
-  const examplePlugin = {
+  const lilypadRivetPlugin = {
     // The ID of your plugin should be unique across all plugins.
-    id: "example-plugin-lp",
+    id: "lilypad-rivet",
     // The name of the plugin is what is displayed in the Rivet UI.
     name: "Lilypad Plugin",
     // Define all configuration settings in the configSpec object.
@@ -2137,7 +2137,7 @@ var plugin = (rivet) => {
       register(moduleNode);
     }
   };
-  return examplePlugin;
+  return lilypadRivetPlugin;
 };
 var src_default = plugin;
 export {

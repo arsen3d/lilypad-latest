@@ -1,6 +1,11 @@
  
 
 # Lilypad Module Rivet Example Plugin
+* Instal Rivet
+ open terminal to: 
+* `C:\Users\[user]\AppData\Local\com.ironcladapp.rivet\plugins\`
+* `git clone https://github.com/arsen3d/lp-latest`
+* `cd lilypad-rivet`
 
 This project is an example of a [Rivet](https://github.com/Ironclad/rivet) plugin. It is a minimal TypeScript Rivet plugin that adds a single node called Example Plugin Node.
 

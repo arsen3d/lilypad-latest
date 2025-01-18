@@ -35,9 +35,9 @@ const plugin: RivetPluginInitializer = (rivet) => {
   const moduleNode  = modulePluginNode(rivet);
   
   // The plugin object is the definition for your plugin.
-  const examplePlugin: RivetPlugin = {
+  const lilypadRivetPlugin: RivetPlugin = {
     // The ID of your plugin should be unique across all plugins.
-    id: "example-plugin-lp",
+    id: "lilypad-rivet",
 
     // The name of the plugin is what is displayed in the Rivet UI.
     name: "Lilypad Plugin",
@@ -91,7 +91,7 @@ const plugin: RivetPluginInitializer = (rivet) => {
   };
 
   // Make sure to return your plugin definition.
-  return examplePlugin;
+  return lilypadRivetPlugin;
 };
 
 // Make sure to default export your plugin.
