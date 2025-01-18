@@ -128,7 +128,7 @@ function cowsayPluginNode(rivet) {
         id: rivet.newId(),
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!!!",
+          someData: "Hello World From LP",
           SK: "",
           prompt: "",
           stdout: "",
@@ -237,7 +237,7 @@ function cowsayPluginNode(rivet) {
       const api = _context.getPluginConfig("api") || "no api url. check plugin config";
       const sk = _context.getPluginConfig("sk") || "no sk url check plugin config";
       const s = "await result ";
-      const { runModuleScript: runModule } = await import("../dist/nodeEntry.cjs");
+      const { runModuleScript: runModule } = await import("./nodeEntry.cjs");
       const output = await runModule(_context, "cowsay:v0.0.4", "Message=" + prompt);
       const decodedOutput = Buffer.from(output.stdout, "base64").toString("utf-8");
       const decodedErr = Buffer.from(output.stderr, "base64").toString("utf-8");
@@ -879,7 +879,7 @@ function agentPluginNode(rivet) {
         // This is the default data that your node will store
         data: {
           module: "github.com/noryev/module-sdxl-ipfs:ae17e969cadab1c53d7cabab1927bb403f02fd2a",
-          input: "prompt=cows",
+          input: "prompt=cow",
           binary_path: "outputs/output.png"
         },
         // This is the default title of your node.
@@ -2074,7 +2074,7 @@ function modulePluginNode(rivet) {
 }
 
 // src/index.ts
-console.log("Hello from Lilypad Plugin!!!");
+console.log("Hello from Lilypad Plugin!");
 var plugin = (rivet) => {
   const exampleNode = examplePluginNode(rivet);
   const cowsayNode = cowsayPluginNode(rivet);

@@ -20,6 +20,7 @@ import type {
   Rivet,
 } from "../../node_modules/@ironclad/rivet-core/dist/types";
 
+
 // This defines your new type of node.
 export type AgentPluginNode = ChartNode<
   "agentPlugin",
@@ -51,7 +52,7 @@ export function agentPluginNode(rivet: typeof Rivet) {
         // This is the default data that your node will store
         data: {
           module: "github.com/noryev/module-sdxl-ipfs:ae17e969cadab1c53d7cabab1927bb403f02fd2a",
-          input:"prompt=cow",
+          input:"prompt=cows",
           binary_path:"outputs/output.png"
         },
 

@@ -19,6 +19,7 @@ export async function untarBlob(blob: Blob): Promise<Array<{ name: string; blob:
     extract.on('finish', () => resolve(files));
     extract.on('error', (err) => reject(err));
 
+    
     blob.arrayBuffer().then((buffer) => {
       const uint8Array = new Uint8Array(buffer);
       extract.end(uint8Array);

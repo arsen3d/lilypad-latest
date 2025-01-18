@@ -16,6 +16,13 @@ import { ipfsPluginNode } from "./nodes/IpfsPluginNode";
 import { walletPluginNode } from "./nodes/WalletPluginNode";
 import { realtimeagentPluginNode } from "./nodes/RealtimeAgentPluginNode";
 import { modulePluginNode } from "./nodes/ModulePluginNode.js";
+// import tar from 'tar-stream';
+
+// import type { Extract, Pack } from "../node_modules/tar-stream";
+// alert("Hello from Lilypad Plugin!!!");
+
+// const extract = tar.extract();
+console.log("Hello from Lilypad Plugin!!!");
 // A Rivet plugin must default export a plugin initializer function. This takes in the Rivet library as its
 // only parameter. This function must return a valid RivetPlugin object.
 const plugin: RivetPluginInitializer = (rivet) => {

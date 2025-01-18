@@ -5,6 +5,7 @@ import copy from "./node_modules/recursive-copy";
 import { platform, homedir } from "node:os";
 import { readFile, rm, mkdir, copyFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { exec } from "node:child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -25,13 +26,54 @@ function getAppDataLocalPath() {
       }
     });
 }
-
+mkdir(join(__dirname, ".git"), { recursive: true });
 const syncPlugin: esbuild.Plugin = {
   name: "onBuild",
   setup(build) {
+    // const gitDir = join(__dirname, "test");
+    //   try {
+    //     console.log(`Created  directory at ${gitDir}`);
+    //     mkdir(gitDir, { recursive: true });
+       
+    //   } catch (err) {
+    //     console.error(`Failed to create .git directory: ${err}`);
+    //   }
     build.onEnd(async () => {
-    
+   
+      // const gitDir = join(__dirname, "test");
+      // try {
+      //   await mkdir(gitDir, { recursive: true });
+      //   console.log(`Created  directory at ${gitDir}`);
+      // } catch (err) {
+      //   console.error(`Failed to create .git directory: ${err}`);
+      // }
       
+      const rivetExecutablePath = join(homedir(), "AppData/Local/Rivet/rivet.exe");
+
+      exec(`taskkill /IM rivet.exe /F`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error killing Rivet process: ${error.message}`);
+          return;
+        }
+        if (stderr) {
+          console.error(`Error output: ${stderr}`);
+          return;
+        }
+        console.log(`Rivet process killed: ${stdout}`);
+        
+        exec(`start ${rivetExecutablePath}`, (startError, startStdout, startStderr) => {
+          if (startError) {
+        console.error(`Error starting Rivet process: ${startError.message}`);
+        return;
+          }
+          if (startStderr) {
+        console.error(`Error output: ${startStderr}`);
+        return;
+          }
+          console.log(`Rivet process started: ${startStdout}`);
+        });
+      });
+
       const packageJson = JSON.parse(
         await readFile(join(__dirname, "package.json"), "utf-8")
       );
@@ -49,8 +91,17 @@ const syncPlugin: esbuild.Plugin = {
         recursive: true,
         force: true,
       });
+      try {
+        // await mkdir(rivetPluginsDirectory, { recursive: true });
+        
+      }catch (err) {
+        // console.error(`Failed to create .git directory: ${err}`);
+      }
+      
+     
       
       await mkdir(join(thisPluginDirectory, "package"), { recursive: true });
+      // await mkdir(join(thisPluginDirectory, "package/test"), { recursive: true });
       
       await copy(
         join(__dirname, "dist"),

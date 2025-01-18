@@ -12,7 +12,7 @@
     "dev": "run-p watch:tsc watch:esbuild:sync",
     "d1": "run-p tsc -b -w --preserveWatchOutput && tsx bundle.ts --watch",
     "watch:root": "tsx bundle.ts --watch --root",
-    "d2": "run-p watch:tsc watch:esbuild",
+    "local": "run-p watch:tsc watch:esbuild",
     "watch:tsc": "tsc -b -w --preserveWatchOutput",
     "watch:esbuild": "tsx bundle.ts --watch",
     "watch:esbuild:sync": "tsx bundle.ts --watch --sync",
@@ -21,6 +21,7 @@
   "dependencies": {
     "@ironclad/rivet-core": "^1.4.0",
     "base64-stream": "^1.0.0",
+    "events": "^3.3.0",
     "tar-stream": "^3.1.7",
     "untar": "^0.2.9"
   },

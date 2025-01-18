@@ -6,8 +6,7 @@ import { PassThrough } from 'stream';
 // import { Client } from "@gradio/client";
 
 
-
-
+console.log("test",this)
 export async function runModuleScript(
   _context: any,
   module: string,

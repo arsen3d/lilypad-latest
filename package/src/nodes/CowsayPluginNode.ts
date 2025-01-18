@@ -54,7 +54,7 @@ export function cowsayPluginNode(rivet: typeof Rivet) {
 
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP",
+          someData: "Hello World From LP!!!!!",
           SK:"",
           prompt: "",
           stdout: "",

@@ -1,3 +1,4 @@
+"use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -3051,23 +3052,23 @@ var require_lib2 = __commonJS({
   }
 });
 
-// node_modules/tar-stream/node_modules/queue-tick/queue-microtask.js
+// node_modules/queue-tick/queue-microtask.js
 var require_queue_microtask = __commonJS({
-  "node_modules/tar-stream/node_modules/queue-tick/queue-microtask.js"(exports2, module2) {
+  "node_modules/queue-tick/queue-microtask.js"(exports2, module2) {
     module2.exports = typeof queueMicrotask === "function" ? queueMicrotask : (fn) => Promise.resolve().then(fn);
   }
 });
 
-// node_modules/tar-stream/node_modules/queue-tick/process-next-tick.js
+// node_modules/queue-tick/process-next-tick.js
 var require_process_next_tick = __commonJS({
-  "node_modules/tar-stream/node_modules/queue-tick/process-next-tick.js"(exports2, module2) {
+  "node_modules/queue-tick/process-next-tick.js"(exports2, module2) {
     module2.exports = typeof process !== "undefined" && typeof process.nextTick === "function" ? process.nextTick.bind(process) : require_queue_microtask();
   }
 });
 
-// node_modules/tar-stream/node_modules/fast-fifo/fixed-size.js
+// node_modules/fast-fifo/fixed-size.js
 var require_fixed_size = __commonJS({
-  "node_modules/tar-stream/node_modules/fast-fifo/fixed-size.js"(exports2, module2) {
+  "node_modules/fast-fifo/fixed-size.js"(exports2, module2) {
     module2.exports = class FixedFIFO {
       constructor(hwm) {
         if (!(hwm > 0) || (hwm - 1 & hwm) !== 0)
@@ -3108,9 +3109,9 @@ var require_fixed_size = __commonJS({
   }
 });
 
-// node_modules/tar-stream/node_modules/fast-fifo/index.js
+// node_modules/fast-fifo/index.js
 var require_fast_fifo = __commonJS({
-  "node_modules/tar-stream/node_modules/fast-fifo/index.js"(exports2, module2) {
+  "node_modules/fast-fifo/index.js"(exports2, module2) {
     var FixedFIFO = require_fixed_size();
     module2.exports = class FastFIFO {
       constructor(hwm) {
@@ -3157,9 +3158,9 @@ var require_fast_fifo = __commonJS({
   }
 });
 
-// node_modules/tar-stream/node_modules/b4a/index.js
+// node_modules/b4a/index.js
 var require_b4a = __commonJS({
-  "node_modules/tar-stream/node_modules/b4a/index.js"(exports2, module2) {
+  "node_modules/b4a/index.js"(exports2, module2) {
     function isBuffer(value) {
       return Buffer.isBuffer(value) || value instanceof Uint8Array;
     }
@@ -3315,9 +3316,9 @@ var require_b4a = __commonJS({
   }
 });
 
-// node_modules/tar-stream/node_modules/text-decoder/lib/pass-through-decoder.js
+// node_modules/text-decoder/lib/pass-through-decoder.js
 var require_pass_through_decoder = __commonJS({
-  "node_modules/tar-stream/node_modules/text-decoder/lib/pass-through-decoder.js"(exports2, module2) {
+  "node_modules/text-decoder/lib/pass-through-decoder.js"(exports2, module2) {
     var b4a = require_b4a();
     module2.exports = class PassThroughDecoder {
       constructor(encoding) {
@@ -3336,9 +3337,9 @@ var require_pass_through_decoder = __commonJS({
   }
 });
 
-// node_modules/tar-stream/node_modules/text-decoder/lib/utf8-decoder.js
+// node_modules/text-decoder/lib/utf8-decoder.js
 var require_utf8_decoder = __commonJS({
-  "node_modules/tar-stream/node_modules/text-decoder/lib/utf8-decoder.js"(exports2, module2) {
+  "node_modules/text-decoder/lib/utf8-decoder.js"(exports2, module2) {
     var b4a = require_b4a();
     module2.exports = class UTF8Decoder {
       constructor() {
@@ -3426,9 +3427,9 @@ var require_utf8_decoder = __commonJS({
   }
 });
 
-// node_modules/tar-stream/node_modules/text-decoder/index.js
+// node_modules/text-decoder/index.js
 var require_text_decoder = __commonJS({
-  "node_modules/tar-stream/node_modules/text-decoder/index.js"(exports2, module2) {
+  "node_modules/text-decoder/index.js"(exports2, module2) {
     var PassThroughDecoder = require_pass_through_decoder();
     var UTF8Decoder = require_utf8_decoder();
     module2.exports = class TextDecoder {
@@ -3490,9 +3491,9 @@ var require_text_decoder = __commonJS({
   }
 });
 
-// node_modules/tar-stream/node_modules/streamx/index.js
+// node_modules/streamx/index.js
 var require_streamx = __commonJS({
-  "node_modules/tar-stream/node_modules/streamx/index.js"(exports2, module2) {
+  "node_modules/streamx/index.js"(exports2, module2) {
     var { EventEmitter } = require("events");
     var STREAM_DESTROYED = new Error("Stream was destroyed");
     var PREMATURE_CLOSE = new Error("Premature close");
@@ -5645,7 +5646,6 @@ var import_node_fetch = __toESM(require_lib2(), 1);
 var import_tar_stream = __toESM(require_tar_stream(), 1);
 var import_base64_stream = __toESM(require_base64_stream(), 1);
 var import_stream = require("stream");
-console.log("test", void 0);
 async function runModuleScript(_context, module2, input) {
   const api = _context.getPluginConfig("api") || "no api url. check plugin config";
   const sk = _context.getPluginConfig("sk") || "no sk url check plugin config";
