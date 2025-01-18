@@ -19,7 +19,9 @@ import type {
   Project,
   Rivet,
 } from "@ironclad/rivet-core";
-
+import {
+  type RivetUIContext,
+  } from "../../node_modules/@ironclad/rivet-core/dist/types/model/RivetUIContext";
 // This defines your new type of node.
 export type ModulePluginNode = ChartNode<
   "modulePlugin",
@@ -52,8 +54,8 @@ export function modulePluginNode(rivet: typeof Rivet) {
 
         // This is the default data that your node will store
         data: {
-          module: "github.com/noryev/module-sdxl-ipfs:ae17e969cadab1c53d7cabab1927bb403f02fd2a",
-          input:"prompt=cow",
+          module: "github.com/arsen3d/audioface_module:main",
+          input:"",
           binary_path:"outputs/output.png",
           id: id,
         },
@@ -126,6 +128,11 @@ export function modulePluginNode(rivet: typeof Rivet) {
           dataType: "any",
           title: "binary",
         },
+        {
+          id: "ipfs_out" as PortId,
+          dataType: "string",
+          title: "ipfs",
+        },
       ];
     },
 
@@ -141,8 +148,27 @@ export function modulePluginNode(rivet: typeof Rivet) {
 
     // This function defines all editors that appear when you edit your node.
     getEditors(
-      _data: ModulePluginNodeData
+      _data: ModulePluginNodeData,
+      context: RivetUIContext
     ): EditorDefinition<ModulePluginNode>[] {
+      console.log("_data",_data)
+      console.log("context",context)
+      // const inputs: NodeInputDefinition[] = [];
+
+      // const _connections = context.connections;
+      // const filteredNodes = Object.values(_connections).filter(node => node.inputNodeId === data.id);
+      // for (let i = 1; i <= filteredNodes.length+1; i++) {
+      //   inputs.push({
+      //     dataType: 'any',
+      //     id: `input${i}` as PortId,
+      //     title: `Input ${i}`,
+      //     description:
+      //       'An input to create the array from. If an array, will be flattened if the "Flatten" option is enabled.',
+      //   });
+      // }
+  
+
+     
       return [
         {
           type: "string",
@@ -261,7 +287,7 @@ async process(
                 .join('&');
             };
             const cid = result.Hash;
-            const fileName = "inputs";//data.id;// 'example.txt';
+            const fileName = result.Hash;//data.id;// 'example.txt';
             const checkUrl = new URL('http://localhost:5001/api/v0/files/stat');
             checkUrl.search = paramsSerializer({
               arg: ['/' + fileName]
@@ -271,11 +297,29 @@ async process(
               method: 'POST',
             });
 
- 
-
             if (checkResponse.ok) {
               console.log(`File ${fileName} already exists.`);
-            } else {
+                const rmUrl = new URL('http://localhost:5001/api/v0/files/rm');
+                rmUrl.search = paramsSerializer({
+                arg: ['/' + fileName],
+                recursive: 'true'
+                });
+
+                const rmResponse = await fetch(rmUrl.toString(), {
+                method: 'POST',
+                });
+
+                if (!rmResponse.ok) {
+                throw new Error(`HTTP error! Status: ${rmResponse.status}`);
+                }
+
+                const rmResult = await rmResponse.text();
+                console.log('IPFS Remove Response:', rmResult);
+            }
+
+            // if (checkResponse.ok) {
+            //   console.log(`File ${fileName} already exists.`);
+            // } else {
               const url = new URL('http://localhost:5001/api/v0/files/cp');
               url.search = paramsSerializer({
               arg: ['/ipfs/' + cid, '/' + fileName]
@@ -293,7 +337,7 @@ async process(
               console.log('IPFS Copy Response:', copyResult);
               console.log('IPFS Response:', result);
  
-            }
+            // }
             try {
           
         } catch (error) {
@@ -327,10 +371,12 @@ async process(
     const payload = {
       pk: sk,
       module: module,
-      inputs: `-i "IPFS=${cid_out}"`,
+      inputs: `-i "ENV=IPFS=${cid_out}"`,
       format: "json",
       stream: "true"
     };
+    console.log("payload",payload);
+     
     const result = await fetch(api, {
       method: 'POST',
       headers: {
@@ -349,6 +395,38 @@ async process(
       // console.log("imgBuffer",imgBuffer)
       binary = imgBuffer
     }
+
+    let ipfs_result = "";
+    if (json.files) {
+      const files = json.files;
+      const formData = new FormData();
+
+      for (const filePath in files) {
+        if (files.hasOwnProperty(filePath)) {
+          const base64Data = files[filePath];
+          const binaryData = atob(base64Data);
+          const byteArray = Uint8Array.from(binaryData, char => char.charCodeAt(0));
+          const blob = new Blob([byteArray]);
+          formData.append('file', blob, filePath);
+        }
+      }
+
+      const response = await fetch('http://localhost:5001/api/v0/add?wrap-with-directory=true', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      const lines = text.trim().split('\n');
+      const result = JSON.parse(lines[lines.length - 1]);
+      ipfs_result = result.Hash;
+    }
+
+    // let ipfs_result = "";
     return {
         ["stdout" as PortId]: {
           type: "string",
@@ -361,6 +439,10 @@ async process(
         ["binary" as PortId]: {
           type: "any",
           value: binary,
+        },
+        ["ipfs" as PortId]: {
+          type: "string",
+          value: ipfs_result,
         },
       };
     },

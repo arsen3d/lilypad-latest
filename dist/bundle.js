@@ -1774,8 +1774,8 @@ function modulePluginNode(rivet) {
         id,
         // This is the default data that your node will store
         data: {
-          module: "github.com/noryev/module-sdxl-ipfs:ae17e969cadab1c53d7cabab1927bb403f02fd2a",
-          input: "prompt=cow",
+          module: "github.com/arsen3d/audioface_module:main",
+          input: "",
           binary_path: "outputs/output.png",
           id
         },
@@ -1826,6 +1826,11 @@ function modulePluginNode(rivet) {
           id: "binary",
           dataType: "any",
           title: "binary"
+        },
+        {
+          id: "ipfs_out",
+          dataType: "string",
+          title: "ipfs"
         }
       ];
     },
@@ -1839,7 +1844,9 @@ function modulePluginNode(rivet) {
       };
     },
     // This function defines all editors that appear when you edit your node.
-    getEditors(_data) {
+    getEditors(_data, context) {
+      console.log("_data", _data);
+      console.log("context", context);
       return [
         {
           type: "string",
@@ -1926,7 +1933,7 @@ function modulePluginNode(rivet) {
           }).join("&");
         };
         const cid = result2.Hash;
-        const fileName = "inputs";
+        const fileName = result2.Hash;
         const checkUrl = new URL("http://localhost:5001/api/v0/files/stat");
         checkUrl.search = paramsSerializer({
           arg: ["/" + fileName]
@@ -1936,21 +1943,33 @@ function modulePluginNode(rivet) {
         });
         if (checkResponse.ok) {
           console.log(`File ${fileName} already exists.`);
-        } else {
-          const url = new URL("http://localhost:5001/api/v0/files/cp");
-          url.search = paramsSerializer({
-            arg: ["/ipfs/" + cid, "/" + fileName]
+          const rmUrl = new URL("http://localhost:5001/api/v0/files/rm");
+          rmUrl.search = paramsSerializer({
+            arg: ["/" + fileName],
+            recursive: "true"
           });
-          const copyResponse = await fetch(url.toString(), {
+          const rmResponse = await fetch(rmUrl.toString(), {
             method: "POST"
           });
-          if (!copyResponse.ok) {
-            throw new Error(`HTTP error! Status: ${copyResponse.status}`);
+          if (!rmResponse.ok) {
+            throw new Error(`HTTP error! Status: ${rmResponse.status}`);
           }
-          const copyResult = await copyResponse.text();
-          console.log("IPFS Copy Response:", copyResult);
-          console.log("IPFS Response:", result2);
+          const rmResult = await rmResponse.text();
+          console.log("IPFS Remove Response:", rmResult);
         }
+        const url = new URL("http://localhost:5001/api/v0/files/cp");
+        url.search = paramsSerializer({
+          arg: ["/ipfs/" + cid, "/" + fileName]
+        });
+        const copyResponse = await fetch(url.toString(), {
+          method: "POST"
+        });
+        if (!copyResponse.ok) {
+          throw new Error(`HTTP error! Status: ${copyResponse.status}`);
+        }
+        const copyResult = await copyResponse.text();
+        console.log("IPFS Copy Response:", copyResult);
+        console.log("IPFS Response:", result2);
         try {
         } catch (error) {
           console.error("Error:", error);
@@ -1981,10 +2000,11 @@ function modulePluginNode(rivet) {
       const payload = {
         pk: sk,
         module,
-        inputs: `-i "IPFS=${cid_out}"`,
+        inputs: `-i "ENV=IPFS=${cid_out}"`,
         format: "json",
         stream: "true"
       };
+      console.log("payload", payload);
       const result = await fetch(api, {
         method: "POST",
         headers: {
@@ -2001,6 +2021,31 @@ function modulePluginNode(rivet) {
         const imgBuffer = Uint8Array.from(img, (c) => c.charCodeAt(0));
         binary = imgBuffer;
       }
+      let ipfs_result = "";
+      if (json.files) {
+        const files = json.files;
+        const formData = new FormData();
+        for (const filePath in files) {
+          if (files.hasOwnProperty(filePath)) {
+            const base64Data = files[filePath];
+            const binaryData = atob(base64Data);
+            const byteArray = Uint8Array.from(binaryData, (char) => char.charCodeAt(0));
+            const blob = new Blob([byteArray]);
+            formData.append("file", blob, filePath);
+          }
+        }
+        const response = await fetch("http://localhost:5001/api/v0/add?wrap-with-directory=true", {
+          method: "POST",
+          body: formData
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const text = await response.text();
+        const lines = text.trim().split("\n");
+        const result2 = JSON.parse(lines[lines.length - 1]);
+        ipfs_result = result2.Hash;
+      }
       return {
         ["stdout"]: {
           type: "string",
@@ -2013,6 +2058,10 @@ function modulePluginNode(rivet) {
         ["binary"]: {
           type: "any",
           value: binary
+        },
+        ["ipfs"]: {
+          type: "string",
+          value: ipfs_result
         }
       };
     }
