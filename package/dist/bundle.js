@@ -1340,6 +1340,11 @@ function ipfsPluginNode(rivet) {
           id: "cid",
           dataType: "string",
           title: "CID"
+        },
+        {
+          id: "url",
+          dataType: "string",
+          title: "URL"
         }
       ];
     },
@@ -1397,24 +1402,46 @@ function ipfsPluginNode(rivet) {
         });
       }
       console.log(inputData);
+      let outputFileName = "defaultFileName";
       let cid_out = await (async () => {
         const inputCount = Object.keys(inputData).filter((key) => key.startsWith("input")).length;
         const formData = new FormData();
+        function getMimeTypeFromDataURL(uint8Array) {
+          const blob = new Blob(uint8Array);
+          const reader = new FileReader();
+          return new Promise((resolve, reject) => {
+            reader.onloadend = () => {
+              const base64String = reader.result.toString().split(",")[1];
+              const text = atob(base64String);
+              console.log("Words", text);
+              const dataURL = reader.result;
+              const mimeType = typeof dataURL === "string" ? dataURL.match(/^data:(.*?);/)?.[1] || "unknown" : "unknown";
+              resolve(mimeType);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        }
         for (let i = 1; i <= inputCount; i++) {
           const input = inputData[`input${i}`];
           const val = input.value;
           const t = input.type;
-          console.log("val", val);
-          console.log("Type of val:", typeof val);
-          if (val instanceof Object && typeof t === "string") {
-            const file = new Blob([val.data], { type: val.mediaType });
-            const extension = val.mediaType.split("/")[1];
-            formData.append("file", file, `input${i}.${extension}`);
+          const mimeType = val.mediaType || "application/octet-stream";
+          console.log("mimetype", mimeType);
+          if (val instanceof Uint8Array) {
+            const file = new Blob([val], { type: mimeType });
+            if ("application/octet-stream" !== mimeType) {
+              const extension = mimeType.split("/")[1];
+              formData.append("file", file, `input${i}.${extension}`);
+            } else {
+              formData.append("file", file, `input${i}`);
+            }
           } else {
             const file = new Blob([val], { type: "text/plain" });
             formData.append("file", file, `input${i}.txt`);
           }
         }
+        outputFileName = formData.get("file")?.name || "defaultFileName";
         let return_cid;
         const response = await fetch("http://localhost:5001/api/v0/add?wrap-with-directory=true", {
           method: "POST",
@@ -1441,7 +1468,7 @@ function ipfsPluginNode(rivet) {
           }).join("&");
         };
         const cid = result.Hash;
-        const fileName = "inputs";
+        const fileName = "files";
         const checkUrl = new URL("http://localhost:5001/api/v0/files/stat");
         checkUrl.search = paramsSerializer({
           arg: ["/" + fileName]
@@ -1476,6 +1503,10 @@ function ipfsPluginNode(rivet) {
         ["cid"]: {
           type: "string",
           value: "IPFS=" + cid_out
+        },
+        ["url"]: {
+          type: "string",
+          value: "http://127.0.0.1:8082/ipfs/" + cid_out + "/" + outputFileName
         }
       };
     }
@@ -1774,6 +1805,7 @@ function modulePluginNode(rivet) {
         id,
         // This is the default data that your node will store
         data: {
+          cidInput: true,
           module: "github.com/arsen3d/audioface_module:main",
           input: "",
           binary_path: "outputs/output.png",
@@ -1848,6 +1880,11 @@ function modulePluginNode(rivet) {
       console.log("_data", _data);
       console.log("context", context);
       return [
+        {
+          type: "toggle",
+          dataKey: "cidInput",
+          label: "CID Input"
+        },
         {
           type: "string",
           dataKey: "module",
@@ -2022,6 +2059,7 @@ function modulePluginNode(rivet) {
         binary = imgBuffer;
       }
       let ipfs_result = "";
+      let outputFileName = "defaultFileName";
       if (json.files) {
         const files = json.files;
         const formData = new FormData();
@@ -2045,7 +2083,9 @@ function modulePluginNode(rivet) {
         const lines = text.trim().split("\n");
         const result2 = JSON.parse(lines[lines.length - 1]);
         ipfs_result = result2.Hash;
+        outputFileName = formData.get("file")?.name || "defaultFileName";
       }
+      window.open("http://127.0.0.1:8082/ipfs/" + ipfs_result + "/" + outputFileName);
       return {
         ["stdout"]: {
           type: "string",
@@ -2073,6 +2113,401 @@ function modulePluginNode(rivet) {
   return modulePluginNode2;
 }
 
+// src/nodes/IframePluginNode.ts
+function iframePluginNode(rivet) {
+  const IframePluginNodeImpl = {
+    // This should create a new instance of your node type from scratch.
+    create() {
+      const node = {
+        // Use rivet.newId to generate new IDs for your nodes.
+        id: rivet.newId(),
+        data: {
+          url: "https://jsonplaceholder.typicode.com/posts"
+          // useDataInput: false,
+          // mediaType: 'image/png',
+          // useMediaTypeInput: false,
+        },
+        // This is the default data that your node will store
+        // data: {
+        //   data:{
+        //     refId: rivet.newId<DataId>(),
+        //     // type: "binary",
+        //   }
+        //   // someData: "about:blank",
+        //   // SK: "",
+        //   // image: new Image()
+        // },
+        // This is the default title of your node.
+        title: "Iframe",
+        // This must match the type of your node.
+        type: "iframePlugin",
+        // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
+        visualData: {
+          x: 0,
+          y: 0,
+          width: 400
+        }
+      };
+      return node;
+    },
+    // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getInputDefinitions(data, _connections, _nodes, _project) {
+      const inputs = [];
+      inputs.push({
+        id: "url",
+        dataType: "string",
+        title: "URL"
+      });
+      return inputs;
+    },
+    // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getOutputDefinitions(_data, _connections, _nodes, _project) {
+      return [
+        {
+          id: "image",
+          dataType: "string",
+          title: "Image"
+        }
+        // {
+        //   id: "someData" as PortId,
+        //   dataType: "string",
+        //   title: "Some Data",
+        // },
+        // {
+        //   id: "SK" as PortId,
+        //   dataType: "binary",
+        //   title: "Secret Key",
+        // },
+      ];
+    },
+    // This returns UI information for your node, such as how it appears in the context menu.
+    getUIData() {
+      return {
+        contextMenuTitle: "Iframe",
+        group: "Lilypad",
+        infoBoxBody: "This is an example plugin node.",
+        infoBoxTitle: "Iframe Plugin Node"
+      };
+    },
+    // This function defines all editors that appear when you edit your node.
+    getEditors(_data, context) {
+      console.log(context.project);
+      return [
+        {
+          type: "string",
+          dataKey: "url",
+          // useInputToggleDataKey: "useDataInput",
+          // useInputToggleDataKey: "useDataInput",
+          label: "URL"
+          // type: "fileBrowser",
+          // dataKey: "data",
+          // mediaTypeDataKey: "mediaType",
+          // useInputToggleDataKey: "useDataInput",
+          // label: "File Path",
+        }
+        // {
+        //   type: "string",
+        //   dataKey: "someData",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Some Data",
+        // },
+        // {
+        //   type: "string",
+        //   dataKey: "SK",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Secret Key",
+        // },
+      ];
+    },
+    // This function returns the body of the node when it is rendered on the graph. You should show
+    // what the current data of the node is in some way that is useful at a glance.
+    getBody(data, c) {
+      let y = rivet.getInputOrData(data, c, "url", "object");
+      console.log("rivet", rivet);
+      let _context = c;
+      let ui = _context;
+      console.log("this", data);
+      console.log("ui", ui);
+      console.log(data);
+      console.log(_context);
+      console.log("y", y);
+      return {
+        type: "markdown",
+        text: `<iframe id="asdf" 
+              onload="try {
+                  // const doc = this.contentDocument || this.contentWindow.document;
+                  // console.log(getElementById('asdf').src);
+                  // console.log(this.getElementById('iframe').contentWindow.document.body.scrollHeight);
+                  this.style.height = 100 + 'px';
+                  //  console.log(this.height =1000);
+                  //  console.log(doc.documentElement.scrollHeight);
+               } catch (e) {
+                   console.error('Unable to access iframe content:', e);
+               }"
+              frameborder="0"  
+              width="100%" 
+              src="${y}"
+              />
+              `
+      };
+    },
+    // This is the main processing function for your node. It can do whatever you like, but it must return
+    // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
+    // must also correspond to the output definitions you defined in the getOutputDefinitions function.
+    /*
+        async process(
+          data: MediaPluginNodeData,
+          inputData: Inputs,
+          _context: InternalProcessContext
+        ): Promise<Outputs> {
+    
+    
+          // let data: Uint8Array;
+    
+          // if (this.chartNode.data.useDataInput) {
+          //   data = expectType(inputData['data' as PortId], 'binary');
+          // } else {
+          const dataRef = data.data?.refId as string;
+          let d = _context.project.data as Record<string, string>;
+          console.log("d",d[dataRef])
+          console.log(data.data?.refId)
+          
+            // if (!dataRef) {
+            //   throw new Error('No data ref');
+            // }
+      
+            // const encodedData = _context.project.data?.[dataRef] as string;
+            const encodedData = (_context.project.data as Record<string, string>)[dataRef]
+            // if (!encodedData) {
+            //   throw new Error(`No data at ref ${dataRef}`);
+            // }
+      
+          //   data = base64ToUint8Array(encodedData);
+          // }
+      
+          // const mediaType = this.chartNode.data.useMediaTypeInput
+          //   ? expectType(inputData['mediaType' as PortId], 'string')
+          //   : this.chartNode.data.mediaType;
+    
+          // const someData = rivet.getInputOrData(
+          //   data,
+          //   inputData,
+          //   "SK",
+          //   "object"
+          // );
+          // console.log(someData)
+          // let ref = someData["refId"] as string;
+          // const ref = data.data?.refId as string;
+          // let x =  (_context.project.data as Record<string, string>)[ref]  ;
+          // console.log("x",base64ToUint8Array(x))
+          // const encodedData = _context.project.data?.[someData] as string;
+          const result = await fetch("https://jsonplaceholder.typicode.com/posts" )
+         
+          return {
+            ["image" as PortId]: {
+              type:"string",
+              value:encodedData,
+            },
+          };
+        },
+      */
+    async process(data, inputData, context) {
+      window.open(inputData["url"].value);
+      return {
+        ["url"]: {
+          type: "string",
+          value: inputData["url"].value
+        }
+      };
+    }
+  };
+  function base64ToUint8Array(base64) {
+    const binaryString = atob(base64);
+    const uint8Array = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      uint8Array[i] = binaryString.charCodeAt(i);
+    }
+    return uint8Array;
+  }
+  const iframePluginNode2 = rivet.pluginNodeDefinition(
+    IframePluginNodeImpl,
+    "Iframe Plugin"
+  );
+  return iframePluginNode2;
+}
+
+// src/nodes/SDXLPluginNode.ts
+function sdxlPluginNode(rivet) {
+  const SDXLPluginNodeImpl = {
+    // This should create a new instance of your node type from scratch.
+    create() {
+      const node = {
+        // Use rivet.newId to generate new IDs for your nodes.
+        id: rivet.newId(),
+        // This is the default data that your node will store
+        data: {
+          openWindow: true,
+          someData: "Hello World From LP!!!!!",
+          SK: "",
+          prompt: "",
+          stdout: "",
+          stderr: ""
+        },
+        // This is the default title of your node.
+        title: "SDXL",
+        // This must match the type of your node.
+        type: "sdxlPlugin",
+        // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
+        visualData: {
+          x: 0,
+          y: 0,
+          width: 200
+        }
+      };
+      return node;
+    },
+    // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getInputDefinitions(data, _connections, _nodes, _project) {
+      const inputs = [];
+      console.log("data", data);
+      if (data.useSomeDataInput) {
+      }
+      inputs.push({
+        id: "prompt",
+        dataType: "string",
+        title: "Prompt"
+      });
+      return inputs;
+    },
+    // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
+    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
+    getOutputDefinitions(_data, _connections, _nodes, _project) {
+      return [
+        {
+          id: "IPFS",
+          dataType: "string",
+          title: "IPFS"
+        }
+        // {
+        //   id: "STDERRData" as PortId,
+        //   dataType: "string",
+        //   title: "STDERR",
+        // },
+        // {
+        //   id: "SK" as PortId,
+        //   dataType: "string",
+        //   title: "Secret Key",
+        // },
+      ];
+    },
+    // This returns UI information for your node, such as how it appears in the context menu.
+    getUIData() {
+      return {
+        contextMenuTitle: "SDXL",
+        group: "Lilypad",
+        infoBoxBody: "This is an example plugin node.",
+        infoBoxTitle: "Example Plugin Node"
+      };
+    },
+    // This function defines all editors that appear when you edit your node.
+    getEditors(_data) {
+      return [
+        // {
+        //   type: "string",
+        //   dataKey: "someData",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Some Data",
+        // },
+        {
+          type: "toggle",
+          dataKey: "openWindow",
+          label: "Open Result"
+        },
+        {
+          type: "string",
+          dataKey: "prompt",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "Prompt"
+        }
+        // {
+        //   type: "string",
+        //   dataKey: "SK",
+        //   useInputToggleDataKey: "useSomeDataInput",
+        //   label: "Secret Key",
+        // },
+      ];
+    },
+    // This function returns the body of the node when it is rendered on the graph. You should show
+    // what the current data of the node is in some way that is useful at a glance.
+    getBody(data) {
+      return rivet.dedent`
+        Prompt:
+        ${!data.prompt ? "(Using Input)" : data.prompt}
+      `;
+    },
+    // This is the main processing function for your node. It can do whatever you like, but it must return
+    // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
+    // must also correspond to the output definitions you defined in the getOutputDefinitions function.
+    async process(data, inputData, _context) {
+      console.log("inputData", inputData, data);
+      const prompt = rivet.getInputOrData(
+        data,
+        inputData,
+        "prompt",
+        "string"
+      );
+      console.log("prompt1", prompt);
+      const api = _context.getPluginConfig("api") || "no api url. check plugin config";
+      const sk = _context.getPluginConfig("sk") || "no sk url check plugin config";
+      const lilypad_module = "cowsay:v0.0.4";
+      const payload = {
+        pk: sk,
+        module: lilypad_module,
+        inputs: `-i "Message=${prompt}"`,
+        format: "ipfs",
+        stream: "true"
+      };
+      console.log("payload", payload);
+      const result = await fetch(api, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+      const json = await result.json();
+      console.log("json", json);
+      const parentCid = json.results[json.results.length - 1].cid;
+      console.log("result", parentCid);
+      if (data.openWindow) {
+        window.open("http://127.0.0.1:8082/ipfs/" + parentCid);
+      }
+      return {
+        // ["someData" as PortId]: {
+        //   type: "string",
+        //   value: decodedOutput,
+        // },
+        // ["STDOUTData" as PortId]: {
+        //   type: "string",
+        //   value: decodedOutput,
+        // },
+        ["IPFS"]: {
+          type: "string",
+          value: parentCid
+        }
+      };
+    }
+  };
+  const sdxlPluginNode2 = rivet.pluginNodeDefinition(
+    SDXLPluginNodeImpl,
+    "Example Plugin"
+  );
+  return sdxlPluginNode2;
+}
+
 // src/index.ts
 console.log("Hello from Lilypad Plugin!!!");
 var plugin = (rivet) => {
@@ -2089,6 +2524,8 @@ var plugin = (rivet) => {
   const walletsNode = walletPluginNode(rivet);
   const realtimeagentNode = realtimeagentPluginNode(rivet);
   const moduleNode = modulePluginNode(rivet);
+  const iframeNode = iframePluginNode(rivet);
+  const sdxlNode = sdxlPluginNode(rivet);
   const lilypadRivetPlugin = {
     // The ID of your plugin should be unique across all plugins.
     id: "lilypad-rivet",
@@ -2136,6 +2573,8 @@ var plugin = (rivet) => {
       register(walletsNode);
       register(realtimeagentNode);
       register(moduleNode);
+      register(iframeNode);
+      register(sdxlNode);
     }
   };
   return lilypadRivetPlugin;

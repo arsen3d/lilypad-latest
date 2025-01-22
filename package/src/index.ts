@@ -16,6 +16,8 @@ import { ipfsPluginNode } from "./nodes/IpfsPluginNode";
 import { walletPluginNode } from "./nodes/WalletPluginNode";
 import { realtimeagentPluginNode } from "./nodes/RealtimeAgentPluginNode";
 import { modulePluginNode } from "./nodes/ModulePluginNode.js";
+import { iframePluginNode } from "./nodes/IframePluginNode.js";
+import { sdxlPluginNode } from "./nodes/SDXLPluginNode.js";
 // import tar from 'tar-stream';
 
 // import type { Extract, Pack } from "../node_modules/tar-stream";
@@ -40,6 +42,8 @@ const plugin: RivetPluginInitializer = (rivet) => {
   const walletsNode = walletPluginNode(rivet);
   const realtimeagentNode  = realtimeagentPluginNode(rivet);
   const moduleNode  = modulePluginNode(rivet);
+  const iframeNode  = iframePluginNode(rivet);
+  const sdxlNode  = sdxlPluginNode(rivet);
   
   // The plugin object is the definition for your plugin.
   const lilypadRivetPlugin: RivetPlugin = {
@@ -93,6 +97,8 @@ const plugin: RivetPluginInitializer = (rivet) => {
       register(walletsNode);
       register(realtimeagentNode);
       register(moduleNode);
+      register(iframeNode);
+      register(sdxlNode);
       
     },
   };

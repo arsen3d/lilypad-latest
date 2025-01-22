@@ -145,6 +145,11 @@ export function ipfsPluginNode(rivet: typeof Rivet) {
           dataType: "string",
           title: "CID",
         },
+        {
+          id: "url" as PortId,
+          dataType: "string",
+          title: "URL",
+        },
       ];
     },
 
@@ -220,6 +225,7 @@ export function ipfsPluginNode(rivet: typeof Rivet) {
  
       }
       console.log(inputData);
+      let outputFileName = 'defaultFileName';
       let cid_out = await (async () => {
         // Object.keys(inputData).forEach((key) => {
         // console.log(inputData[key as keyof Input].value) 
@@ -239,25 +245,59 @@ export function ipfsPluginNode(rivet: typeof Rivet) {
         // formData.append('file', file2, 'file2.txt');
         const inputCount = Object.keys(inputData).filter((key) => key.startsWith('input')).length;
         const formData = new FormData();
-      
+       
+        // function getMimeTypeFromUint8Array(data) {
+        //   const blob = new Blob([data]);
+        //   console.log(blob)
+        //   return blob.type || 'unknown';
+        // }
+        function getMimeTypeFromDataURL(uint8Array) {
+          const blob = new Blob(uint8Array);
+          const reader = new FileReader();
+        
+          return new Promise((resolve, reject) => {
+            reader.onloadend = () => {
+                const base64String = reader.result.toString().split(",")[1];
+               
+                const text = atob(base64String);
+                console.log("Words", text);
+              const dataURL = reader.result;
+              const mimeType = typeof dataURL === 'string' ? dataURL.match(/^data:(.*?);/)?.[1] || 'unknown' : 'unknown';
+              resolve(mimeType);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        }
+
         for (let i = 1; i <= inputCount; i++) {
           const input = inputData[`input${i}` as PortId]!;
           const val= input.value;
           const t= input.type;
           // console.log("val",(Object.values(val.data).toString() as string))
-            console.log("val", val);
-            console.log("Type of val:", typeof val);
-            if (val instanceof Object && typeof t === 'string') {
-            const file = new Blob([(val as { data: string, mediaType: string }).data], { type: (val as { data: string, mediaType: string }).mediaType });
-            const extension = (val as { mediaType: string }).mediaType.split('/')[1];
-            formData.append('file', file, `input${i}.${extension}`);
-            }else{
+            // console.log("val", await getMimeTypeFromDataURL(val));
+            // console.log("Type of val:", typeof val);
+            // console.log("mimetype",val)
+            const mimeType = (val as { mediaType: string }).mediaType || 'application/octet-stream';
+            console.log("mimetype",mimeType);
+            if (val instanceof Uint8Array) {
+              const file = new Blob([val], { type: mimeType });
+              if ("application/octet-stream" !== mimeType) {
+              const extension = mimeType.split('/')[1];
+              formData.append('file', file, `input${i}.${extension}`);
+              } else {
+              formData.append('file', file, `input${i}`);
+              }
+            } else {
               const file = new Blob([val as string], { type: "text/plain" });
               formData.append('file', file, `input${i}.txt`);
             }
+           
           // console.log(input.value)
           // outputs[`output${i}` as PortId] = input;
         }
+        
+        outputFileName = (formData.get('file') as File)?.name || 'defaultFileName';
         let return_cid;
       
             const response = await fetch('http://localhost:5001/api/v0/add?wrap-with-directory=true', {
@@ -289,7 +329,7 @@ export function ipfsPluginNode(rivet: typeof Rivet) {
                 .join('&');
             };
             const cid = result.Hash;
-            const fileName = "inputs";//data.id;// 'example.txt';
+            const fileName = "files";//data.id;// 'example.txt';
             const checkUrl = new URL('http://localhost:5001/api/v0/files/stat');
             checkUrl.search = paramsSerializer({
               arg: ['/' + fileName]
@@ -369,6 +409,10 @@ export function ipfsPluginNode(rivet: typeof Rivet) {
         ["cid" as PortId]: {
           type: "string",
           value: "IPFS="+cid_out,
+        },
+        ["url" as PortId]: {
+          type: "string",
+          value: "http://127.0.0.1:8082/ipfs/"+cid_out + "/"+outputFileName,
         },
       };
     },

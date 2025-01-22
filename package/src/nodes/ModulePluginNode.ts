@@ -38,6 +38,7 @@ export type ModulePluginNodeData = {
   useSomeDataInput?: boolean;
   useipfsInput?: boolean ;
   id: string;
+  cidInput?: boolean;
 };
 
 // Make sure you export functions that take in the Rivet library, so that you do not
@@ -54,6 +55,7 @@ export function modulePluginNode(rivet: typeof Rivet) {
 
         // This is the default data that your node will store
         data: {
+          cidInput:true,
           module: "github.com/arsen3d/audioface_module:main",
           input:"",
           binary_path:"outputs/output.png",
@@ -170,6 +172,11 @@ export function modulePluginNode(rivet: typeof Rivet) {
 
      
       return [
+        {
+          type: "toggle",
+          dataKey: "cidInput",
+          label: "CID Input",
+        },
         {
           type: "string",
           dataKey: "module",
@@ -397,6 +404,7 @@ async process(
     }
 
     let ipfs_result = "";
+    let outputFileName = "defaultFileName";
     if (json.files) {
       const files = json.files;
       const formData = new FormData();
@@ -424,8 +432,9 @@ async process(
       const lines = text.trim().split('\n');
       const result = JSON.parse(lines[lines.length - 1]);
       ipfs_result = result.Hash;
+      outputFileName = (formData.get('file') as File)?.name || 'defaultFileName';
     }
-
+    window.open("http://127.0.0.1:8082/ipfs/"+ipfs_result + "/"+outputFileName)
     // let ipfs_result = "";
     return {
         ["stdout" as PortId]: {
