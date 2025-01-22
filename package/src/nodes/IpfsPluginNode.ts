@@ -408,7 +408,7 @@ export function ipfsPluginNode(rivet: typeof Rivet) {
       return {
         ["cid" as PortId]: {
           type: "string",
-          value: "IPFS="+cid_out,
+          value: cid_out,
         },
         ["url" as PortId]: {
           type: "string",

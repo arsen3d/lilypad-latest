@@ -1502,7 +1502,7 @@ function ipfsPluginNode(rivet) {
       return {
         ["cid"]: {
           type: "string",
-          value: "IPFS=" + cid_out
+          value: cid_out
         },
         ["url"]: {
           type: "string",
@@ -1829,14 +1829,23 @@ function modulePluginNode(rivet) {
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getInputDefinitions(data, _connections, _nodes, _project) {
       const inputs = [];
-      const filteredNodes = Object.values(_connections).filter((node) => node.inputNodeId === data.id);
-      for (let i = 1; i <= filteredNodes.length + 1; i++) {
+      if (data.cidInput) {
         inputs.push({
-          dataType: "any",
-          id: `input${i}`,
-          title: `Input ${i}`,
-          description: 'An input to create the array from. If an array, will be flattened if the "Flatten" option is enabled.'
+          dataType: "string",
+          id: "cid",
+          title: "CID",
+          description: "The CID of the file to be processed."
         });
+      } else {
+        const filteredNodes = Object.values(_connections).filter((node) => node.inputNodeId === data.id);
+        for (let i = 1; i <= filteredNodes.length + 1; i++) {
+          inputs.push({
+            dataType: "any",
+            id: `input${i}`,
+            title: `Input ${i}`,
+            description: 'An input to create the array from. If an array, will be flattened if the "Flatten" option is enabled.'
+          });
+        }
       }
       return inputs;
     },
@@ -1844,21 +1853,21 @@ function modulePluginNode(rivet) {
     // connection, nodes, and project are for advanced use-cases and can usually be ignored.
     getOutputDefinitions(_data, _connections, _nodes, _project) {
       return [
-        {
-          id: "stdout",
-          dataType: "string",
-          title: "stdout"
-        },
-        {
-          id: "stderr",
-          dataType: "string",
-          title: "stderr"
-        },
-        {
-          id: "binary",
-          dataType: "any",
-          title: "binary"
-        },
+        // {
+        //   id: "stdout" as PortId,
+        //   dataType: "string",
+        //   title: "stdout",
+        // },
+        // {
+        //   id: "stderr" as PortId,
+        //   dataType: "string",
+        //   title: "stderr",
+        // },
+        // {
+        //   id: "binary" as PortId,
+        //   dataType: "any",
+        //   title: "binary",
+        // },
         {
           id: "ipfs_out",
           dataType: "string",
@@ -1908,137 +1917,23 @@ function modulePluginNode(rivet) {
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(data) {
-      return rivet.dedent`
- 
-    `;
+      return ` ${data.module}`;
     },
     // This is the main processing function for your node. It can do whatever you like, but it must return
     // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
     // must also correspond to the output definitions you defined in the getOutputDefinitions function.
     async process(data, inputData, _context) {
-      async function addFileToIPFS(file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        const response = await fetch("http://localhost:5001/api/v0/add", {
-          // mode: "no-cors",
-          method: "POST",
-          body: formData
-        });
-      }
-      console.log(inputData);
-      let cid_out = await (async () => {
-        const inputCount = Object.keys(inputData).filter((key) => key.startsWith("input")).length;
-        const formData = new FormData();
-        for (let i = 1; i <= inputCount; i++) {
-          const input2 = inputData[`input${i}`];
-          const val = input2.value;
-          const t = input2.type;
-          console.log("val", val);
-          console.log("Type of val:", typeof val);
-          if (val instanceof Object && typeof t === "string") {
-            const file = new Blob([val.data], { type: val.mediaType });
-            const extension = val.mediaType.split("/")[1];
-            formData.append("file", file, `input${i}.${extension}`);
-          } else {
-            const file = new Blob([val], { type: "text/plain" });
-            formData.append("file", file, `input${i}.txt`);
-          }
-        }
-        let return_cid;
-        const response = await fetch("http://localhost:5001/api/v0/add?wrap-with-directory=true", {
-          method: "POST",
-          body: formData
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        let txt = (await response.text()).trim().split("\n");
-        console.log("IPFS Response:\n", JSON.parse(txt[txt.length - 1]));
-        const result2 = JSON.parse(txt[txt.length - 1]);
-        console.log(result2);
-        return_cid = result2.Hash;
-        const params = {
-          arg: ["/ipfs/" + result2.Hash, ""]
-        };
-        const paramsSerializer = (params2) => {
-          return Object.keys(params2).map((key) => {
-            const value = params2[key];
-            if (Array.isArray(value)) {
-              return value.map((v) => `${encodeURIComponent(key)}=${encodeURIComponent(v)}`).join("&");
-            }
-            return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
-          }).join("&");
-        };
-        const cid = result2.Hash;
-        const fileName = result2.Hash;
-        const checkUrl = new URL("http://localhost:5001/api/v0/files/stat");
-        checkUrl.search = paramsSerializer({
-          arg: ["/" + fileName]
-        });
-        const checkResponse = await fetch(checkUrl.toString(), {
-          method: "POST"
-        });
-        if (checkResponse.ok) {
-          console.log(`File ${fileName} already exists.`);
-          const rmUrl = new URL("http://localhost:5001/api/v0/files/rm");
-          rmUrl.search = paramsSerializer({
-            arg: ["/" + fileName],
-            recursive: "true"
-          });
-          const rmResponse = await fetch(rmUrl.toString(), {
-            method: "POST"
-          });
-          if (!rmResponse.ok) {
-            throw new Error(`HTTP error! Status: ${rmResponse.status}`);
-          }
-          const rmResult = await rmResponse.text();
-          console.log("IPFS Remove Response:", rmResult);
-        }
-        const url = new URL("http://localhost:5001/api/v0/files/cp");
-        url.search = paramsSerializer({
-          arg: ["/ipfs/" + cid, "/" + fileName]
-        });
-        const copyResponse = await fetch(url.toString(), {
-          method: "POST"
-        });
-        if (!copyResponse.ok) {
-          throw new Error(`HTTP error! Status: ${copyResponse.status}`);
-        }
-        const copyResult = await copyResponse.text();
-        console.log("IPFS Copy Response:", copyResult);
-        console.log("IPFS Response:", result2);
-        try {
-        } catch (error) {
-          console.error("Error:", error);
-        }
-        return return_cid;
-      })();
-      console.log("inputData", inputData, data);
-      const input = rivet.getInputOrData(
-        data,
-        inputData,
-        "input",
-        "string"
-      );
-      const module = rivet.getInputOrData(
-        data,
-        inputData,
-        "module",
-        "string"
-      );
-      const binary_path = rivet.getInputOrData(
-        data,
-        inputData,
-        "binary_path",
-        "string"
-      );
       const api = _context.getPluginConfig("api") || "no api url. check plugin config";
       const sk = _context.getPluginConfig("sk") || "no sk url check plugin config";
+      const cid = inputData["cid"].value;
+      console.log("cid", cid);
+      console.log("data.module", data.module);
       const payload = {
         pk: sk,
-        module,
-        inputs: `-i "ENV=IPFS=${cid_out}"`,
-        format: "json",
+        module: data.module,
+        // inputs: `-i "ENV=IPFS=${cid_out}"`,
+        inputs: `-i "ENV=IPFS=${cid}"`,
+        format: "ipfs",
         stream: "true"
       };
       console.log("payload", payload);
@@ -2050,60 +1945,186 @@ function modulePluginNode(rivet) {
         body: JSON.stringify(payload)
       });
       const json = await result.json();
-      const decodedOutput = atob(json.stdout);
-      const decodedErr = atob(json.stderr);
-      let binary = null;
-      if (json[binary_path] != void 0) {
-        const img = atob(json[binary_path]);
-        const imgBuffer = Uint8Array.from(img, (c) => c.charCodeAt(0));
-        binary = imgBuffer;
-      }
-      let ipfs_result = "";
-      let outputFileName = "defaultFileName";
-      if (json.files) {
-        const files = json.files;
-        const formData = new FormData();
-        for (const filePath in files) {
-          if (files.hasOwnProperty(filePath)) {
-            const base64Data = files[filePath];
-            const binaryData = atob(base64Data);
-            const byteArray = Uint8Array.from(binaryData, (char) => char.charCodeAt(0));
-            const blob = new Blob([byteArray]);
-            formData.append("file", blob, filePath);
-          }
-        }
-        const response = await fetch("http://localhost:5001/api/v0/add?wrap-with-directory=true", {
-          method: "POST",
-          body: formData
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const text = await response.text();
-        const lines = text.trim().split("\n");
-        const result2 = JSON.parse(lines[lines.length - 1]);
-        ipfs_result = result2.Hash;
-        outputFileName = formData.get("file")?.name || "defaultFileName";
-      }
-      window.open("http://127.0.0.1:8082/ipfs/" + ipfs_result + "/" + outputFileName);
+      console.log("json", json);
+      const parentCid = json.results[json.results.length - 1].cid;
+      window.open("http://127.0.0.1:8082/ipfs/" + parentCid);
       return {
-        ["stdout"]: {
-          type: "string",
-          value: decodedOutput
-        },
-        ["stderr"]: {
-          type: "string",
-          value: decodedErr
-        },
-        ["binary"]: {
-          type: "any",
-          value: binary
-        },
+        // ["stdout" as PortId]: {
+        //   type: "string",
+        //   value: decodedOutput,
+        // },
+        // ["stderr" as PortId]: {
+        //   type: "string",
+        //   value: decodedErr,
+        // },
+        // ["binary" as PortId]: {
+        //   type: "any",
+        //   value: binary,
+        // },
         ["ipfs"]: {
           type: "string",
-          value: ipfs_result
+          value: parentCid
         }
       };
+      async function saveResults() {
+        const binary_path = "";
+        const json2 = await result.json();
+        const decodedOutput = atob(json2.stdout);
+        const decodedErr = atob(json2.stderr);
+        let binary = null;
+        if (json2[binary_path] != void 0) {
+          const img = atob(json2[binary_path]);
+          const imgBuffer = Uint8Array.from(img, (c) => c.charCodeAt(0));
+          binary = imgBuffer;
+        }
+        let ipfs_result = "";
+        let outputFileName = "defaultFileName";
+        if (json2.files) {
+          const files = json2.files;
+          const formData = new FormData();
+          for (const filePath in files) {
+            if (files.hasOwnProperty(filePath)) {
+              const base64Data = files[filePath];
+              const binaryData = atob(base64Data);
+              const byteArray = Uint8Array.from(binaryData, (char) => char.charCodeAt(0));
+              const blob = new Blob([byteArray]);
+              formData.append("file", blob, filePath);
+            }
+          }
+          const response = await fetch("http://localhost:5001/api/v0/add?wrap-with-directory=true", {
+            method: "POST",
+            body: formData
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          const text = await response.text();
+          const lines = text.trim().split("\n");
+          const result2 = JSON.parse(lines[lines.length - 1]);
+          ipfs_result = result2.Hash;
+          outputFileName = formData.get("file")?.name || "defaultFileName";
+        }
+        return { ipfs_result, outputFileName, decodedOutput, decodedErr, binary };
+      }
+      async function GetDataInputs() {
+        async function addFileToIPFS(file) {
+          const formData = new FormData();
+          formData.append("file", file);
+          const response = await fetch("http://localhost:5001/api/v0/add", {
+            // mode: "no-cors",
+            method: "POST",
+            body: formData
+          });
+        }
+        console.log(inputData);
+        let cid_out = await (async () => {
+          const inputCount = Object.keys(inputData).filter((key) => key.startsWith("input")).length;
+          const formData = new FormData();
+          for (let i = 1; i <= inputCount; i++) {
+            const input2 = inputData[`input${i}`];
+            const val = input2.value;
+            const t = input2.type;
+            console.log("val", val);
+            console.log("Type of val:", typeof val);
+            if (val instanceof Object && typeof t === "string") {
+              const file = new Blob([val.data], { type: val.mediaType });
+              const extension = val.mediaType.split("/")[1];
+              formData.append("file", file, `input${i}.${extension}`);
+            } else {
+              const file = new Blob([val], { type: "text/plain" });
+              formData.append("file", file, `input${i}.txt`);
+            }
+          }
+          let return_cid;
+          const response = await fetch("http://localhost:5001/api/v0/add?wrap-with-directory=true", {
+            method: "POST",
+            body: formData
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          let txt = (await response.text()).trim().split("\n");
+          console.log("IPFS Response:\n", JSON.parse(txt[txt.length - 1]));
+          const result2 = JSON.parse(txt[txt.length - 1]);
+          console.log(result2);
+          return_cid = result2.Hash;
+          const params = {
+            arg: ["/ipfs/" + result2.Hash, ""]
+          };
+          const paramsSerializer = (params2) => {
+            return Object.keys(params2).map((key) => {
+              const value = params2[key];
+              if (Array.isArray(value)) {
+                return value.map((v) => `${encodeURIComponent(key)}=${encodeURIComponent(v)}`).join("&");
+              }
+              return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+            }).join("&");
+          };
+          const cid2 = result2.Hash;
+          const fileName = result2.Hash;
+          const checkUrl = new URL("http://localhost:5001/api/v0/files/stat");
+          checkUrl.search = paramsSerializer({
+            arg: ["/" + fileName]
+          });
+          const checkResponse = await fetch(checkUrl.toString(), {
+            method: "POST"
+          });
+          if (checkResponse.ok) {
+            console.log(`File ${fileName} already exists.`);
+            const rmUrl = new URL("http://localhost:5001/api/v0/files/rm");
+            rmUrl.search = paramsSerializer({
+              arg: ["/" + fileName],
+              recursive: "true"
+            });
+            const rmResponse = await fetch(rmUrl.toString(), {
+              method: "POST"
+            });
+            if (!rmResponse.ok) {
+              throw new Error(`HTTP error! Status: ${rmResponse.status}`);
+            }
+            const rmResult = await rmResponse.text();
+            console.log("IPFS Remove Response:", rmResult);
+          }
+          const url = new URL("http://localhost:5001/api/v0/files/cp");
+          url.search = paramsSerializer({
+            arg: ["/ipfs/" + cid2, "/" + fileName]
+          });
+          const copyResponse = await fetch(url.toString(), {
+            method: "POST"
+          });
+          if (!copyResponse.ok) {
+            throw new Error(`HTTP error! Status: ${copyResponse.status}`);
+          }
+          const copyResult = await copyResponse.text();
+          console.log("IPFS Copy Response:", copyResult);
+          console.log("IPFS Response:", result2);
+          try {
+          } catch (error) {
+            console.error("Error:", error);
+          }
+          return return_cid;
+        })();
+        console.log("inputData", inputData, data);
+        const input = rivet.getInputOrData(
+          data,
+          inputData,
+          "input",
+          "string"
+        );
+        const module = rivet.getInputOrData(
+          data,
+          inputData,
+          "module",
+          "string"
+        );
+        const binary_path = rivet.getInputOrData(
+          data,
+          inputData,
+          "binary_path",
+          "string"
+        );
+        return { module, cid_out, binary_path };
+      }
     }
   };
   const modulePluginNode2 = rivet.pluginNodeDefinition(
