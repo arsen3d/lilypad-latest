@@ -48,31 +48,31 @@ const syncPlugin: esbuild.Plugin = {
       //   console.error(`Failed to create .git directory: ${err}`);
       // }
       
-      const rivetExecutablePath = join(homedir(), "AppData/Local/Rivet/rivet.exe");
+      // const rivetExecutablePath = join(homedir(), "AppData/Local/Rivet/rivet.exe");
 
-      exec(`taskkill /IM rivet.exe /F`, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`Error killing Rivet process: ${error.message}`);
-          return;
-        }
-        if (stderr) {
-          console.error(`Error output: ${stderr}`);
-          return;
-        }
-        console.log(`Rivet process killed: ${stdout}`);
+      // exec(`taskkill /IM rivet.exe /F`, (error, stdout, stderr) => {
+      //   if (error) {
+      //     console.error(`Error killing Rivet process: ${error.message}`);
+      //     return;
+      //   }
+      //   if (stderr) {
+      //     console.error(`Error output: ${stderr}`);
+      //     return;
+      //   }
+      //   console.log(`Rivet process killed: ${stdout}`);
         
-        exec(`start ${rivetExecutablePath}`, (startError, startStdout, startStderr) => {
-          if (startError) {
-        console.error(`Error starting Rivet process: ${startError.message}`);
-        return;
-          }
-          if (startStderr) {
-        console.error(`Error output: ${startStderr}`);
-        return;
-          }
-          console.log(`Rivet process started: ${startStdout}`);
-        });
-      });
+      //   exec(`start ${rivetExecutablePath}`, (startError, startStdout, startStderr) => {
+      //     if (startError) {
+      //   console.error(`Error starting Rivet process: ${startError.message}`);
+      //   return;
+      //     }
+      //     if (startStderr) {
+      //   console.error(`Error output: ${startStderr}`);
+      //   return;
+      //     }
+      //     console.log(`Rivet process started: ${startStdout}`);
+      //   });
+      // });
 
       const packageJson = JSON.parse(
         await readFile(join(__dirname, "package.json"), "utf-8")
