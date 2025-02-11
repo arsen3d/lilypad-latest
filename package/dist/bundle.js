@@ -1,123 +1,3 @@
-// src/nodes/ExamplePluginNode.ts
-function examplePluginNode(rivet) {
-  const ExamplePluginNodeImpl = {
-    // This should create a new instance of your node type from scratch.
-    create() {
-      const node = {
-        // Use rivet.newId to generate new IDs for your nodes.
-        id: rivet.newId(),
-        // This is the default data that your node will store
-        data: {
-          someData: "Hello World From LP!!!",
-          SK: ""
-        },
-        // This is the default title of your node.
-        title: "Example",
-        // This must match the type of your node.
-        type: "examplePlugin",
-        // X and Y should be set to 0. Width should be set to a reasonable number so there is no overflow.
-        visualData: {
-          x: 0,
-          y: 0,
-          width: 200
-        }
-      };
-      return node;
-    },
-    // This function should return all input ports for your node, given its data, connections, all other nodes, and the project. The
-    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
-    getInputDefinitions(data, _connections, _nodes, _project) {
-      const inputs = [];
-      if (data.useSomeDataInput) {
-        inputs.push({
-          id: "someData",
-          dataType: "string",
-          title: "Some Data"
-        });
-        inputs.push({
-          id: "SK",
-          dataType: "string",
-          title: "Secret Key"
-        });
-      }
-      return inputs;
-    },
-    // This function should return all output ports for your node, given its data, connections, all other nodes, and the project. The
-    // connection, nodes, and project are for advanced use-cases and can usually be ignored.
-    getOutputDefinitions(_data, _connections, _nodes, _project) {
-      return [
-        {
-          id: "someData",
-          dataType: "string",
-          title: "Some Data"
-        },
-        {
-          id: "SK",
-          dataType: "string",
-          title: "Secret Key"
-        }
-      ];
-    },
-    // This returns UI information for your node, such as how it appears in the context menu.
-    getUIData() {
-      return {
-        contextMenuTitle: "Example",
-        group: "Lilypad",
-        infoBoxBody: "This is an example plugin node.",
-        infoBoxTitle: "Example Plugin Node"
-      };
-    },
-    // This function defines all editors that appear when you edit your node.
-    getEditors(_data) {
-      return [
-        {
-          type: "string",
-          dataKey: "someData",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data"
-        },
-        {
-          type: "string",
-          dataKey: "SK",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Secret Key"
-        }
-      ];
-    },
-    // This function returns the body of the node when it is rendered on the graph. You should show
-    // what the current data of the node is in some way that is useful at a glance.
-    getBody(data) {
-      return rivet.dedent`
-        Example Plugin Node
-        Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
-      `;
-    },
-    // This is the main processing function for your node. It can do whatever you like, but it must return
-    // a valid Outputs object, which is a map of port IDs to DataValue objects. The return value of this function
-    // must also correspond to the output definitions you defined in the getOutputDefinitions function.
-    async process(data, inputData, _context) {
-      const someData = rivet.getInputOrData(
-        data,
-        inputData,
-        "someData",
-        "string"
-      );
-      const result = await fetch("https://jsonplaceholder.typicode.com/posts");
-      return {
-        ["someData"]: {
-          type: "string",
-          value: await result.text()
-        }
-      };
-    }
-  };
-  const examplePluginNode2 = rivet.pluginNodeDefinition(
-    ExamplePluginNodeImpl,
-    "Example Plugin"
-  );
-  return examplePluginNode2;
-}
-
 // src/nodes/CowsayPluginNode.ts
 function cowsayPluginNode(rivet) {
   const CowsayPluginNodeImpl = {
@@ -274,8 +154,10 @@ function searchAgentPluginNode(rivet) {
         id: rivet.newId(),
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!"
-          // SK:""
+          prompt: "You are an expert oncology researcher who is helping select scientific papers to be used as a basis for new immuno-therapy design and discovery. You will be given the title of a paper and the abstract, and you need to decided on a scale of 1-100 how likely that paper is to be relevent to the topic-target.",
+          model: "DeepSeek 70B",
+          inputData: "Paper titles + abstracts + topic-target",
+          useSomeDataInput: true
         },
         // This is the default title of your node.
         title: "Paper Search Agent",
@@ -296,9 +178,9 @@ function searchAgentPluginNode(rivet) {
       const inputs = [];
       if (data.useSomeDataInput) {
         inputs.push({
-          id: "someData",
+          id: "inputData",
           dataType: "string",
-          title: "Terms"
+          title: "Data"
         });
       }
       return inputs;
@@ -308,9 +190,9 @@ function searchAgentPluginNode(rivet) {
     getOutputDefinitions(_data, _connections, _nodes, _project) {
       return [
         {
-          id: "someData",
+          id: "outputData",
           dataType: "string",
-          title: "Results"
+          title: "Selected Papers"
         }
         // {
         //   id: "SK" as PortId,
@@ -333,23 +215,35 @@ function searchAgentPluginNode(rivet) {
       return [
         {
           type: "string",
-          dataKey: "someData",
+          dataKey: "prompt",
+          label: "Prompt"
+        },
+        {
+          type: "dropdown",
+          dataKey: "model",
+          label: "Model",
+          options: [
+            { value: "DeepSeek 70B", label: "DeepSeek 70B" },
+            { value: "Falcon3 7B", label: "Falcon3 7B" },
+            { value: "DeepSeek 671B", label: "DeepSeek 671B" }
+          ]
+        },
+        {
+          type: "string",
+          dataKey: "inputData",
           useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data"
+          label: "Input:"
         }
-        // {
-        //   type: "string",
-        //   dataKey: "SK",
-        //   useInputToggleDataKey: "useSomeDataInput",
-        //   label: "Secret Key",
-        // },
       ];
     },
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(data) {
       return rivet.dedent`
-        Agent-1: The Search Agent is the entry point into the Decentralized AI-Oncologist pipeline. Its primary purpose is to perform a targeted literature search over a large corpus of oncology-related documents. By leveraging semantic search techniques and Retrieval Augmented Generation (RAG), this agent identifies a set of papers or excerpts most likely relevant to the oncology target in question.
+      Model: ${data.model}\n
+      Input: ${data.useSomeDataInput ? "<<Data>>" : data.inputData}\n
+      Output: <<Selected Papers>>\n
+      Prompt: ${data.prompt}\n
         
       `;
     },
@@ -361,7 +255,7 @@ function searchAgentPluginNode(rivet) {
       const someData = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "prompt",
         "string"
       );
       const result = await fetch("https://jsonplaceholder.typicode.com/posts");
@@ -390,8 +284,10 @@ function paperReaderAgentPluginNode(rivet) {
         id: rivet.newId(),
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!"
-          // SK:""
+          prompt: "You are an expert oncology researcher who is performing a close reading of immuno therapy papers to find paragraphs containing potentially useful molecules. Please read the paragraph you are provided and decide on a scale of 1-100 how likely it is that that paragraph contains the description of or information related to an immuno-therapy related molecule.",
+          model: "DeepSeek 70B",
+          inputData: "Selected Papers",
+          useSomeDataInput: true
         },
         // This is the default title of your node.
         title: "Paper Reader Agent",
@@ -424,9 +320,9 @@ function paperReaderAgentPluginNode(rivet) {
     getOutputDefinitions(_data, _connections, _nodes, _project) {
       return [
         {
-          id: "someData",
+          id: "outputData",
           dataType: "string",
-          title: "Results"
+          title: "Selected Paragraphs"
         }
         // {
         //   id: "SK" as PortId,
@@ -449,9 +345,26 @@ function paperReaderAgentPluginNode(rivet) {
       return [
         {
           type: "string",
-          dataKey: "someData",
+          dataKey: "prompt",
+          // useInputToggleDataKey: "useSomeDataInput",
+          label: "Prompt"
+        },
+        {
+          type: "dropdown",
+          dataKey: "model",
+          // useInputToggleDataKey: "useSomeDataInput",
+          label: "Model",
+          options: [
+            { value: "DeepSeek 70B", label: "DeepSeek 70B" },
+            { value: "Falcon3 7B", label: "Falcon3 7B" },
+            { value: "DeepSeek 671B", label: "DeepSeek 671B" }
+          ]
+        },
+        {
+          type: "string",
+          dataKey: "inputData",
           useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data"
+          label: "Input:"
         }
         // {
         //   type: "string",
@@ -465,8 +378,10 @@ function paperReaderAgentPluginNode(rivet) {
     // what the current data of the node is in some way that is useful at a glance.
     getBody(data) {
       return rivet.dedent`
-       The Paper Reader 
-       is the second step in the Decentralized AI-Oncologist pipeline. Its core function is to process the documents retrieved by Agent-1 (The Search Agent) at a finer granularity—examining each paper paragraph-by-paragraph. The goal is to identify textual segments that potentially describe proteins, molecules, or structural features relevant to the target disease context discovered in the literature.
+        Model: ${data.model}\n
+        Input: ${data.useSomeDataInput ? "<<Data>>" : data.inputData}\n
+        Output: <<Selected Paragraphs>>\n
+        Prompt: ${data.prompt}\n
       `;
     },
     // Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
@@ -477,7 +392,7 @@ function paperReaderAgentPluginNode(rivet) {
       const someData = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "inputData",
         "string"
       );
       const result = await fetch("https://jsonplaceholder.typicode.com/posts");
@@ -506,8 +421,13 @@ function oncologistAgentPluginNode(rivet) {
         id: rivet.newId(),
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!"
-          // SK:""
+          prompt: `You are an expert oncology researcher who specializes in designing new precision immuno therapy compounds for oncology. You will be given a paragraph that should contain a description of an immuno therapy related molecule/antibody/binder, and your job is two fold:
+- Produce a prompt to be used with a text-to-protein model to produce a PDB file from a scientifically rigorous description of the molecule.
+- Produce a lab report that includes: High level summary of background and impact of molecule, description of known interactomics between the subject molecule and other known onco bio-molecules, any information that would be useful to a practicing oncologist or wet lab scientist in using or prescribing the molecule or a derived molecule with a patient.
+                  `,
+          model: "DeepSeek 70B",
+          inputData: "Paper titles + abstracts + topic-target",
+          useSomeDataInput: true
         },
         // This is the default title of your node.
         title: "Oncologist Agent",
@@ -530,7 +450,7 @@ function oncologistAgentPluginNode(rivet) {
         inputs.push({
           id: "someData",
           dataType: "string",
-          title: "Terms"
+          title: "Selected paragraphs"
         });
       }
       return inputs;
@@ -542,7 +462,7 @@ function oncologistAgentPluginNode(rivet) {
         {
           id: "someData",
           dataType: "string",
-          title: "Results"
+          title: "PDB-generation-prompt + Report"
         }
         // {
         //   id: "SK" as PortId,
@@ -565,9 +485,26 @@ function oncologistAgentPluginNode(rivet) {
       return [
         {
           type: "string",
-          dataKey: "someData",
+          dataKey: "prompt",
+          // useInputToggleDataKey: "useSomeDataInput",
+          label: "Prompt"
+        },
+        {
+          type: "dropdown",
+          dataKey: "model",
+          // useInputToggleDataKey: "useSomeDataInput",
+          label: "Model",
+          options: [
+            { value: "DeepSeek 70B", label: "DeepSeek 70B" },
+            { value: "Falcon3 7B", label: "Falcon3 7B" },
+            { value: "DeepSeek 671B", label: "DeepSeek 671B" }
+          ]
+        },
+        {
+          type: "string",
+          dataKey: "inputData",
           useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data"
+          label: "Input:"
         }
         // {
         //   type: "string",
@@ -581,8 +518,11 @@ function oncologistAgentPluginNode(rivet) {
     // what the current data of the node is in some way that is useful at a glance.
     getBody(data) {
       return rivet.dedent`
-       Transform unstructured insights (relevant paragraphs and knowledge graphs) into a precise experimental blueprint for protein design.
-      `;
+      Model: ${data.model}\n
+      Input: ${data.useSomeDataInput ? "<<Selected paragraphs>>" : data.inputData}\n
+      Output: <<PDB-generation-prompt + Lab report on molecule>>\n
+      Prompt: ${data.prompt}\n
+    `;
     },
     // Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
     // This is the main processing function for your node. It can do whatever you like, but it must return
@@ -592,7 +532,7 @@ function oncologistAgentPluginNode(rivet) {
       const someData = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "inputData",
         "string"
       );
       const result = await fetch("https://jsonplaceholder.typicode.com/posts");
@@ -621,8 +561,10 @@ function proteinDesignerAgentPluginNode(rivet) {
         id: rivet.newId(),
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!"
-          // SK:""
+          prompt: "You are an expert oncology researcher who is helping select scientific papers to be used as a basis for new immuno-therapy design and discovery. You will be given the title of a paper and the abstract, and you need to decided on a scale of 1-100 how likely that paper is to be relevent to the topic-target.",
+          model: "Pinal",
+          inputData: "Paper titles + abstracts + topic-target",
+          useSomeDataInput: true
         },
         // This is the default title of your node.
         title: "Protein Designer Agent",
@@ -645,7 +587,7 @@ function proteinDesignerAgentPluginNode(rivet) {
         inputs.push({
           id: "someData",
           dataType: "string",
-          title: "Terms"
+          title: "PDB-generation-prompt + Report"
         });
       }
       return inputs;
@@ -680,24 +622,37 @@ function proteinDesignerAgentPluginNode(rivet) {
       return [
         {
           type: "string",
-          dataKey: "someData",
+          dataKey: "prompt",
+          label: "Prompt"
+        },
+        {
+          type: "dropdown",
+          dataKey: "model",
+          label: "Model",
+          options: [
+            { value: "Pinal", label: "Pinal" },
+            { value: "DeepSeek 70B", label: "DeepSeek 70B" },
+            { value: "Falcon3 7B", label: "Falcon3 7B" },
+            { value: "DeepSeek 671B", label: "DeepSeek 671B" }
+          ]
+        },
+        {
+          type: "string",
+          dataKey: "inputData",
           useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data"
+          label: "Input:"
         }
-        // {
-        //   type: "string",
-        //   dataKey: "SK",
-        //   useInputToggleDataKey: "useSomeDataInput",
-        //   label: "Secret Key",
-        // },
       ];
     },
     // This function returns the body of the node when it is rendered on the graph. You should show
     // what the current data of the node is in some way that is useful at a glance.
     getBody(data) {
       return rivet.dedent`
-       TBD
-      `;
+      Model: ${data.model}\n
+      Input: ${data.useSomeDataInput ? "<<Selected paragraphs>>" : data.inputData}\n
+      Output: <<Protein generation prompt + Report>>\n
+      Prompt: ${data.prompt}\n
+    `;
     },
     // Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
     // This is the main processing function for your node. It can do whatever you like, but it must return
@@ -707,7 +662,7 @@ function proteinDesignerAgentPluginNode(rivet) {
       const someData = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "inputData",
         "string"
       );
       const result = await fetch("https://jsonplaceholder.typicode.com/posts");
@@ -2532,7 +2487,6 @@ function sdxlPluginNode(rivet) {
 // src/index.ts
 console.log("Hello from Lilypad Plugin!!!");
 var plugin = (rivet) => {
-  const exampleNode = examplePluginNode(rivet);
   const cowsayNode = cowsayPluginNode(rivet);
   const searchNode = searchAgentPluginNode(rivet);
   const readerNode = paperReaderAgentPluginNode(rivet);
@@ -2581,7 +2535,6 @@ var plugin = (rivet) => {
     // Register any additional nodes your plugin adds here. This is passed a `register`
     // function, which you can use to register your nodes.
     register: (register) => {
-      register(exampleNode);
       register(cowsayNode);
       register(searchNode);
       register(readerNode);

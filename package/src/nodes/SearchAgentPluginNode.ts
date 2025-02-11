@@ -2,6 +2,7 @@
 // Make sure you do `import type` and do not pull in the entire Rivet core library here.
 // Export a function that takes in a Rivet object, and you can access rivet library functionality
 // from there.
+import { Drop } from "esbuild";
 import type {
   ChartNode,
   EditorDefinition,
@@ -29,10 +30,9 @@ export type SearchAgentPluginNode = ChartNode<
 
 // This defines the data that your new node will store.
 export type SearchAgentPluginNodeData = {
-  someData: string;
-  // SK: string;
-  // It is a good idea to include useXInput fields for any inputs you have, so that
-  // the user can toggle whether or not to use an import port for them.
+  prompt: string;
+  model: "DeepSeek 70B" | "Falcon3 7B" | "DeepSeek 671B"; // Dropdown options
+  inputData: string;
   useSomeDataInput?: boolean;
 };
 
@@ -47,8 +47,10 @@ export function searchAgentPluginNode(rivet: typeof Rivet) {
 
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!",
-          // SK:""
+          prompt: "You are an expert oncology researcher who is helping select scientific papers to be used as a basis for new immuno-therapy design and discovery. You will be given the title of a paper and the abstract, and you need to decided on a scale of 1-100 how likely that paper is to be relevent to the topic-target.",
+          model: "DeepSeek 70B",
+          inputData: "Paper titles + abstracts + topic-target",
+          useSomeDataInput: true,
         },
 
         // This is the default title of your node.
@@ -79,9 +81,9 @@ export function searchAgentPluginNode(rivet: typeof Rivet) {
 
       if (data.useSomeDataInput) {
         inputs.push({
-          id: "someData" as PortId,
+          id: "inputData" as PortId,
           dataType: "string",
-          title: "Terms",
+          title: "Data",
         });
         // inputs.push({
         //   id: "SK" as PortId,
@@ -103,9 +105,9 @@ export function searchAgentPluginNode(rivet: typeof Rivet) {
     ): NodeOutputDefinition[] {
       return [
         {
-          id: "someData" as PortId,
+          id: "outputData" as PortId,
           dataType: "string",
-          title: "Results",
+          title: "Selected Papers",
         },
         // {
         //   id: "SK" as PortId,
@@ -132,16 +134,25 @@ export function searchAgentPluginNode(rivet: typeof Rivet) {
       return [
         {
           type: "string",
-          dataKey: "someData",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data",
+          dataKey: "prompt",
+          label: "Prompt",
         },
-        // {
-        //   type: "string",
-        //   dataKey: "SK",
-        //   useInputToggleDataKey: "useSomeDataInput",
-        //   label: "Secret Key",
-        // },
+        {
+          type: "dropdown",
+          dataKey: "model",
+          label: "Model",
+          options: [
+            { value: "DeepSeek 70B", label: "DeepSeek 70B" },
+            { value: "Falcon3 7B", label: "Falcon3 7B" },
+            { value: "DeepSeek 671B", label: "DeepSeek 671B" },
+          ],
+        },
+        {
+          type: "string",
+          dataKey: "inputData",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "Input:",
+        },
       ];
     },
 
@@ -151,9 +162,14 @@ export function searchAgentPluginNode(rivet: typeof Rivet) {
       data: SearchAgentPluginNodeData
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
-        Agent-1: The Search Agent is the entry point into the Decentralized AI-Oncologist pipeline. Its primary purpose is to perform a targeted literature search over a large corpus of oncology-related documents. By leveraging semantic search techniques and Retrieval Augmented Generation (RAG), this agent identifies a set of papers or excerpts most likely relevant to the oncology target in question.
+      Model: ${data.model}\n
+      Input: ${data.useSomeDataInput?"<<Data>>":data.inputData}\n
+      Output: <<Selected Papers>>\n
+      Prompt: ${data.prompt}\n
         
       `;
+      //Agent-1: The Search Agent is the entry point into the Decentralized AI-Oncologist pipeline. Its primary purpose is to perform a targeted literature search over a large corpus of oncology-related documents. By leveraging semantic search techniques and Retrieval Augmented Generation (RAG), this agent identifies a set of papers or excerpts most likely relevant to the oncology target in question.
+        
     },
     // Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
     // This is the main processing function for your node. It can do whatever you like, but it must return
@@ -167,7 +183,7 @@ export function searchAgentPluginNode(rivet: typeof Rivet) {
       const someData = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "prompt",
         "string"
       );
 

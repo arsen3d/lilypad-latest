@@ -3,7 +3,7 @@
 // a parameter, and you can use it to access any Rivet functionality you need.
 import type { RivetPlugin, RivetPluginInitializer } from "../node_modules/@ironclad/rivet-core/dist/types/index.js";
 
-import { examplePluginNode } from "./nodes/ExamplePluginNode.js";
+// import { examplePluginNode } from "./nodes/ExamplePluginNode.js";
 import { cowsayPluginNode } from "./nodes/CowsayPluginNode.js";
 import { searchAgentPluginNode } from "./nodes/SearchAgentPluginNode.js";
 import { paperReaderAgentPluginNode } from "./nodes/PaperReaderAgentPluginNode.js";
@@ -29,7 +29,7 @@ console.log("Hello from Lilypad Plugin!!!");
 // only parameter. This function must return a valid RivetPlugin object.
 const plugin: RivetPluginInitializer = (rivet) => {
   // Initialize any nodes in here in the same way, by passing them the Rivet library.
-  const exampleNode = examplePluginNode(rivet);
+  // const exampleNode = examplePluginNode(rivet);
   const cowsayNode = cowsayPluginNode(rivet);
   const searchNode = searchAgentPluginNode(rivet);
   const readerNode = paperReaderAgentPluginNode(rivet);
@@ -84,7 +84,7 @@ const plugin: RivetPluginInitializer = (rivet) => {
     // Register any additional nodes your plugin adds here. This is passed a `register`
     // function, which you can use to register your nodes.
     register: (register) => {
-      register(exampleNode);
+      // register(exampleNode);
       register(cowsayNode);
       register(searchNode);
       register(readerNode);

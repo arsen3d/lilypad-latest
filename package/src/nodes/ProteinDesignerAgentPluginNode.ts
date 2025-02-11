@@ -29,10 +29,9 @@ export type ProteinDesignerAgentPluginNode = ChartNode<
 
 // This defines the data that your new node will store.
 export type ProteinDesignerAgentPluginNodeData = {
-  someData: string;
-  // SK: string;
-  // It is a good idea to include useXInput fields for any inputs you have, so that
-  // the user can toggle whether or not to use an import port for them.
+  prompt: string;
+  model: "DeepSeek 70B" | "Falcon3 7B" | "DeepSeek 671B" | "Pinal"; // Dropdown options
+  inputData: string;
   useSomeDataInput?: boolean;
 };
 
@@ -47,10 +46,11 @@ export function proteinDesignerAgentPluginNode(rivet: typeof Rivet) {
 
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!",
-          // SK:""
+          prompt: "You are an expert oncology researcher who is helping select scientific papers to be used as a basis for new immuno-therapy design and discovery. You will be given the title of a paper and the abstract, and you need to decided on a scale of 1-100 how likely that paper is to be relevent to the topic-target.",
+          model: "Pinal",
+          inputData: "Paper titles + abstracts + topic-target",
+          useSomeDataInput: true,
         },
-
         // This is the default title of your node.
         title: "Protein Designer Agent",
 
@@ -81,7 +81,7 @@ export function proteinDesignerAgentPluginNode(rivet: typeof Rivet) {
         inputs.push({
           id: "someData" as PortId,
           dataType: "string",
-          title: "Terms",
+          title: "PDB-generation-prompt + Report",
         });
         // inputs.push({
         //   id: "SK" as PortId,
@@ -132,16 +132,26 @@ export function proteinDesignerAgentPluginNode(rivet: typeof Rivet) {
       return [
         {
           type: "string",
-          dataKey: "someData",
-          useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data",
+          dataKey: "prompt",
+          label: "Prompt",
         },
-        // {
-        //   type: "string",
-        //   dataKey: "SK",
-        //   useInputToggleDataKey: "useSomeDataInput",
-        //   label: "Secret Key",
-        // },
+        {
+          type: "dropdown",
+          dataKey: "model",
+          label: "Model",
+          options: [
+            { value: "Pinal", label: "Pinal" },
+            { value: "DeepSeek 70B", label: "DeepSeek 70B" },
+            { value: "Falcon3 7B", label: "Falcon3 7B" },
+            { value: "DeepSeek 671B", label: "DeepSeek 671B" },
+          ],
+        },
+        {
+          type: "string",
+          dataKey: "inputData",
+          useInputToggleDataKey: "useSomeDataInput",
+          label: "Input:",
+        },
       ];
     },
 
@@ -151,8 +161,11 @@ export function proteinDesignerAgentPluginNode(rivet: typeof Rivet) {
       data: ProteinDesignerAgentPluginNodeData
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
-       TBD
-      `;
+      Model: ${data.model}\n
+      Input: ${data.useSomeDataInput?"<<Selected paragraphs>>":data.inputData}\n
+      Output: <<Protein generation prompt + Report>>\n
+      Prompt: ${data.prompt}\n
+    `;
     },
     // Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
     // This is the main processing function for your node. It can do whatever you like, but it must return
@@ -166,7 +179,7 @@ export function proteinDesignerAgentPluginNode(rivet: typeof Rivet) {
       const someData = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "inputData",
         "string"
       );
 

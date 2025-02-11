@@ -29,11 +29,11 @@ export type PaperReaderAgentPluginNode = ChartNode<
 
 // This defines the data that your new node will store.
 export type PaperReaderAgentPluginNodeData = {
-  someData: string;
-  // SK: string;
-  // It is a good idea to include useXInput fields for any inputs you have, so that
-  // the user can toggle whether or not to use an import port for them.
+  prompt: string;
+  model: "DeepSeek 70B" | "Falcon3 7B" | "DeepSeek 671B"; // Dropdown options
+  inputData: string;
   useSomeDataInput?: boolean;
+ 
 };
 
 // // This defines your new type of node.
@@ -63,8 +63,10 @@ export function paperReaderAgentPluginNode(rivet: typeof Rivet) {
         
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!",
-          // SK:""
+          prompt: "You are an expert oncology researcher who is performing a close reading of immuno therapy papers to find paragraphs containing potentially useful molecules. Please read the paragraph you are provided and decide on a scale of 1-100 how likely it is that that paragraph contains the description of or information related to an immuno-therapy related molecule.",
+          model: "DeepSeek 70B",
+          inputData: "Selected Papers",
+          useSomeDataInput: true,
         },
 
         // This is the default title of your node.
@@ -119,9 +121,9 @@ export function paperReaderAgentPluginNode(rivet: typeof Rivet) {
     ): NodeOutputDefinition[] {
       return [
         {
-          id: "someData" as PortId,
+          id: "outputData" as PortId,
           dataType: "string",
-          title: "Results",
+          title: "Selected Paragraphs",
         },
         // {
         //   id: "SK" as PortId,
@@ -148,9 +150,26 @@ export function paperReaderAgentPluginNode(rivet: typeof Rivet) {
       return [
         {
           type: "string",
-          dataKey: "someData",
+          dataKey: "prompt",
+          // useInputToggleDataKey: "useSomeDataInput",
+          label: "Prompt",
+        },
+        {
+          type: "dropdown",
+          dataKey: "model",
+          // useInputToggleDataKey: "useSomeDataInput",
+          label: "Model",
+          options: [
+            { value: "DeepSeek 70B", label: "DeepSeek 70B" },
+            { value: "Falcon3 7B", label: "Falcon3 7B" },
+            { value: "DeepSeek 671B", label: "DeepSeek 671B" },
+          ],
+        },
+        {
+          type: "string",
+          dataKey: "inputData",
           useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data",
+          label: "Input:",
         },
         // {
         //   type: "string",
@@ -167,8 +186,10 @@ export function paperReaderAgentPluginNode(rivet: typeof Rivet) {
       data: PaperReaderAgentPluginNodeData
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
-       The Paper Reader 
-       is the second step in the Decentralized AI-Oncologist pipeline. Its core function is to process the documents retrieved by Agent-1 (The Search Agent) at a finer granularity—examining each paper paragraph-by-paragraph. The goal is to identify textual segments that potentially describe proteins, molecules, or structural features relevant to the target disease context discovered in the literature.
+        Model: ${data.model}\n
+        Input: ${data.useSomeDataInput?"<<Data>>":data.inputData}\n
+        Output: <<Selected Paragraphs>>\n
+        Prompt: ${data.prompt}\n
       `;
     },
     // Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
@@ -183,7 +204,7 @@ export function paperReaderAgentPluginNode(rivet: typeof Rivet) {
       const someData = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "inputData",
         "string"
       );
 

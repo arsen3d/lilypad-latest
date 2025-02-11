@@ -29,10 +29,9 @@ export type OncologistAgentPluginNode = ChartNode<
 
 // This defines the data that your new node will store.
 export type OncologistAgentPluginNodeData = {
-  someData: string;
-  // SK: string;
-  // It is a good idea to include useXInput fields for any inputs you have, so that
-  // the user can toggle whether or not to use an import port for them.
+  prompt: string;
+  model: "DeepSeek 70B" | "Falcon3 7B" | "DeepSeek 671B"; // Dropdown options
+  inputData: string;
   useSomeDataInput?: boolean;
 };
 
@@ -47,8 +46,13 @@ export function oncologistAgentPluginNode(rivet: typeof Rivet) {
 
         // This is the default data that your node will store
         data: {
-          someData: "Hello World From LP!!!",
-          // SK:""
+          prompt: `You are an expert oncology researcher who specializes in designing new precision immuno therapy compounds for oncology. You will be given a paragraph that should contain a description of an immuno therapy related molecule/antibody/binder, and your job is two fold:
+- Produce a prompt to be used with a text-to-protein model to produce a PDB file from a scientifically rigorous description of the molecule.
+- Produce a lab report that includes: High level summary of background and impact of molecule, description of known interactomics between the subject molecule and other known onco bio-molecules, any information that would be useful to a practicing oncologist or wet lab scientist in using or prescribing the molecule or a derived molecule with a patient.
+                  `,
+          model: "DeepSeek 70B",
+          inputData: "Paper titles + abstracts + topic-target",
+          useSomeDataInput: true,
         },
 
         // This is the default title of your node.
@@ -81,7 +85,7 @@ export function oncologistAgentPluginNode(rivet: typeof Rivet) {
         inputs.push({
           id: "someData" as PortId,
           dataType: "string",
-          title: "Terms",
+          title: "Selected paragraphs",
         });
         // inputs.push({
         //   id: "SK" as PortId,
@@ -105,7 +109,7 @@ export function oncologistAgentPluginNode(rivet: typeof Rivet) {
         {
           id: "someData" as PortId,
           dataType: "string",
-          title: "Results",
+          title: "PDB-generation-prompt + Report",
         },
         // {
         //   id: "SK" as PortId,
@@ -132,9 +136,26 @@ export function oncologistAgentPluginNode(rivet: typeof Rivet) {
       return [
         {
           type: "string",
-          dataKey: "someData",
+          dataKey: "prompt",
+          // useInputToggleDataKey: "useSomeDataInput",
+          label: "Prompt",
+        },
+        {
+          type: "dropdown",
+          dataKey: "model",
+          // useInputToggleDataKey: "useSomeDataInput",
+          label: "Model",
+          options: [
+            { value: "DeepSeek 70B", label: "DeepSeek 70B" },
+            { value: "Falcon3 7B", label: "Falcon3 7B" },
+            { value: "DeepSeek 671B", label: "DeepSeek 671B" },
+          ],
+        },
+        {
+          type: "string",
+          dataKey: "inputData",
           useInputToggleDataKey: "useSomeDataInput",
-          label: "Some Data",
+          label: "Input:",
         },
         // {
         //   type: "string",
@@ -151,8 +172,11 @@ export function oncologistAgentPluginNode(rivet: typeof Rivet) {
       data: OncologistAgentPluginNodeData
     ): string | NodeBodySpec | NodeBodySpec[] | undefined {
       return rivet.dedent`
-       Transform unstructured insights (relevant paragraphs and knowledge graphs) into a precise experimental blueprint for protein design.
-      `;
+      Model: ${data.model}\n
+      Input: ${data.useSomeDataInput?"<<Selected paragraphs>>":data.inputData}\n
+      Output: <<PDB-generation-prompt + Lab report on molecule>>\n
+      Prompt: ${data.prompt}\n
+    `;
     },
     // Data: ${data.useSomeDataInput ? "(Using Input)" : data.someData}
     // This is the main processing function for your node. It can do whatever you like, but it must return
@@ -166,7 +190,7 @@ export function oncologistAgentPluginNode(rivet: typeof Rivet) {
       const someData = rivet.getInputOrData(
         data,
         inputData,
-        "someData",
+        "inputData",
         "string"
       );
 
